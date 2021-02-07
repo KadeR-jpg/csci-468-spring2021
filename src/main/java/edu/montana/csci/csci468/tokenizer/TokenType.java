@@ -8,11 +8,14 @@ public enum TokenType {
     LEFT_PAREN, RIGHT_PAREN,
     LEFT_BRACE, RIGHT_BRACE,
     LEFT_BRACKET, RIGHT_BRACKET,
+    //Math operanda
     COLON, COMMA, DOT, MINUS, PLUS, SLASH, STAR,
     BANG_EQUAL,
     EQUAL, EQUAL_EQUAL,
     GREATER, GREATER_EQUAL,
     LESS, LESS_EQUAL,
+
+    //Done: Math operands,  
 
     // literals
     IDENTIFIER, STRING, INTEGER,

@@ -2,11 +2,16 @@ package edu.montana.csci.csci468.tokenizer;
 
 import static edu.montana.csci.csci468.tokenizer.TokenType.*;
 
+import javax.lang.model.util.ElementFilter;
+import javax.swing.text.Position;
+
+import org.apache.velocity.runtime.directive.Break;
+
 public class CatScriptTokenizer {
 
     TokenList tokenList;
     String src;
-    int postion = 0;
+    int position = 0;
     int line = 1;
     int lineOffset = 0;
 
@@ -22,38 +27,39 @@ public class CatScriptTokenizer {
             scanToken();
             consumeWhitespace();
         }
-        tokenList.addToken(EOF, "<EOF>", postion, postion, line, lineOffset);
+        tokenList.addToken(EOF, "<EOF>", position, position, line, lineOffset);
     }
 
     private void scanToken() {
-        if(scanNumber()) {
+        if (scanNumber()) {
             return;
         }
-        if(scanString()) {
+        if (scanString()) {
             return;
         }
-        if(scanIdentifier()) {
+        if (scanIdentifier()) {
             return;
         }
         scanSyntax();
     }
 
     private boolean scanString() {
+
         // TODO implement string scanning here!
         return false;
     }
 
     private boolean scanIdentifier() {
-        if( isAlpha(peek())) {
-            int start = postion;
+        if (isAlpha(peek())) {
+            int start = position;
             while (isAlphaNumeric(peek())) {
                 takeChar();
             }
-            String value = src.substring(start, postion);
+            String value = src.substring(start, position);
             if (KEYWORDS.containsKey(value)) {
-                tokenList.addToken(KEYWORDS.get(value), value, start, postion, line, lineOffset);
+                tokenList.addToken(KEYWORDS.get(value), value, start, position, line, lineOffset);
             } else {
-                tokenList.addToken(IDENTIFIER, value, start, postion, line, lineOffset);
+                tokenList.addToken(IDENTIFIER, value, start, position, line, lineOffset);
             }
             return true;
         } else {
@@ -62,12 +68,12 @@ public class CatScriptTokenizer {
     }
 
     private boolean scanNumber() {
-        if(isDigit(peek())) {
-            int start = postion;
+        if (isDigit(peek())) {
+            int start = position;
             while (isDigit(peek())) {
                 takeChar();
             }
-            tokenList.addToken(INTEGER, src.substring(start, postion), start, postion, line, lineOffset);
+            tokenList.addToken(INTEGER, src.substring(start, position), start, position, line, lineOffset);
             return true;
         } else {
             return false;
@@ -75,52 +81,77 @@ public class CatScriptTokenizer {
     }
 
     private void scanSyntax() {
-        // TODO - implement rest of syntax scanning
-        //      - implement comments
-        int start = postion;
-        if(matchAndConsume('+')) {
-            tokenList.addToken(PLUS, "+", start, postion, line, lineOffset);
-        } else if(matchAndConsume('-')) {
-            tokenList.addToken(MINUS, "-", start, postion, line, lineOffset);
-        } else if(matchAndConsume('=')) {
+        // DONE - implement rest of syntax scanning
+        // - implement comments
+        int start = position;
+        if (matchAndConsume('+')) {
+            tokenList.addToken(PLUS, "+", start, position, line, lineOffset);
+        } else if (matchAndConsume('-')) {
+            tokenList.addToken(MINUS, "-", start, position, line, lineOffset);
+        } else if (matchAndConsume('=')) {
             if (matchAndConsume('=')) {
-                tokenList.addToken(EQUAL_EQUAL, "==", start, postion, line, lineOffset);
+                tokenList.addToken(EQUAL_EQUAL, "==", start, position, line, lineOffset);
             } else {
-                tokenList.addToken(EQUAL, "=", start, postion, line, lineOffset);
+                tokenList.addToken(EQUAL, "=", start, position, line, lineOffset);
+            }
+        } else if (matchAndConsume('!')) {
+            if (matchAndConsume('=')) {
+                tokenList.addToken(BANG_EQUAL, "!=", start, position, line, lineOffset);
+            }
+        } else if (matchAndConsume('*')) {
+            tokenList.addToken(STAR, "*", start, position, line, lineOffset);
+        } else if (matchAndConsume('>')) {
+            if (matchAndConsume('=')) {
+                tokenList.addToken(GREATER_EQUAL, ">=", start, position, line, lineOffset);
+            } else {
+                tokenList.addToken(GREATER, ">", start, position, line, lineOffset);
+            }
+        } else if (matchAndConsume('<')) {
+            if (matchAndConsume('=')) {
+                tokenList.addToken(LESS_EQUAL, "<=", start, position, line, lineOffset);
+            } else {
+                tokenList.addToken(LESS, "<", start, position, line, lineOffset);
+            }
+        } else if (matchAndConsume('/')) {
+            if (matchAndConsume('/')) {
+                while (peek() != '\n' && !tokenizationEnd()) {
+                    takeChar();
+                }
+            } else {
+                tokenList.addToken(SLASH, "/", start, position, line, lineOffset);
             }
         } else {
-            tokenList.addToken(ERROR, "<Unexpected Token: [" + takeChar() + "]>", start, postion, line, lineOffset);
+            tokenList.addToken(ERROR, "<Unexpected Token: [" + takeChar() + "]>", start, position, line, lineOffset);
         }
     }
 
     private void consumeWhitespace() {
-        // TODO update line and lineOffsets
+        ~// TODO update line and lineOffsets
         while (!tokenizationEnd()) {
             char c = peek();
             if (c == ' ' || c == '\r' || c == '\t') {
-                postion++;
+                position++;
                 continue;
             } else if (c == '\n') {
-                postion++;
+                position++;
                 continue;
             }
             break;
         }
     }
 
-    //===============================================================
+    // ===============================================================
     // Utility functions
-    //===============================================================
+    // ===============================================================
 
     private char peek() {
-        if (tokenizationEnd()) return '\0';
-        return src.charAt(postion);
+        if (tokenizationEnd())
+            return '\0';
+        return src.charAt(position);
     }
 
     private boolean isAlpha(char c) {
-        return (c >= 'a' && c <= 'z') ||
-                (c >= 'A' && c <= 'Z') ||
-                c == '_';
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
     }
 
     private boolean isAlphaNumeric(char c) {
@@ -132,13 +163,13 @@ public class CatScriptTokenizer {
     }
 
     private char takeChar() {
-        char c = src.charAt(postion);
-        postion++;
+        char c = src.charAt(position);
+        position++;
         return c;
     }
 
     private boolean tokenizationEnd() {
-        return postion >= src.length();
+        return position >= src.length();
     }
 
     public boolean matchAndConsume(char c) {
