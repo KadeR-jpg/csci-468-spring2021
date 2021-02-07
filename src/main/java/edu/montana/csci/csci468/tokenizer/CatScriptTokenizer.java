@@ -4,6 +4,7 @@ import static edu.montana.csci.csci468.tokenizer.TokenType.*;
 
 import javax.lang.model.util.ElementFilter;
 import javax.swing.text.Position;
+import javax.xml.transform.Source;
 
 import org.apache.velocity.runtime.directive.Break;
 
@@ -44,9 +45,28 @@ public class CatScriptTokenizer {
     }
 
     private boolean scanString() {
+        if (peek() == '"') {
+            int start = position;
+            while (!tokenizationEnd()) {
+                takeChar();
+                if (peek() == '\\') {
+                    takeChar();
+                    if (peek() == '"') {
+                        takeChar();
+                    }
+                }
+                if (peek() == '\n') {
+                    line++;
+                }
+                takeChar();
+            }
+            String value = src.substring(start, position);
+            tokenList.addToken(STRING, value, start, position, line, lineOffset);
+        }
+
+        return false;
 
         // TODO implement string scanning here!
-        return false;
     }
 
     private boolean scanIdentifier() {
@@ -88,6 +108,26 @@ public class CatScriptTokenizer {
             tokenList.addToken(PLUS, "+", start, position, line, lineOffset);
         } else if (matchAndConsume('-')) {
             tokenList.addToken(MINUS, "-", start, position, line, lineOffset);
+        } else if (matchAndConsume('*')) {
+            tokenList.addToken(STAR, "*", start, position, line, lineOffset);
+        } else if (matchAndConsume('(')) {
+            tokenList.addToken(LEFT_PAREN, "(", start, position, line, lineOffset);
+        } else if (matchAndConsume(')')) {
+            tokenList.addToken(RIGHT_PAREN, ")", start, position, line, lineOffset);
+        } else if (matchAndConsume('[')) {
+            tokenList.addToken(LEFT_BRACKET, "[", start, position, line, lineOffset);
+        } else if (matchAndConsume(']')) {
+            tokenList.addToken(RIGHT_BRACKET, "]", start, position, line, lineOffset);
+        } else if (matchAndConsume('{')) {
+            tokenList.addToken(LEFT_BRACE, "{", start, position, line, lineOffset);
+        } else if (matchAndConsume('}')) {
+            tokenList.addToken(RIGHT_BRACE, "}", start, position, line, lineOffset);
+        } else if (matchAndConsume(':')) {
+            tokenList.addToken(COLON, ":", start, position, line, lineOffset);
+        } else if (matchAndConsume(',')) {
+            tokenList.addToken(COMMA, ",", start, position, line, lineOffset);
+        } else if (matchAndConsume('.')) {
+            tokenList.addToken(DOT, ".", start, position, line, lineOffset);
         } else if (matchAndConsume('=')) {
             if (matchAndConsume('=')) {
                 tokenList.addToken(EQUAL_EQUAL, "==", start, position, line, lineOffset);
@@ -98,8 +138,6 @@ public class CatScriptTokenizer {
             if (matchAndConsume('=')) {
                 tokenList.addToken(BANG_EQUAL, "!=", start, position, line, lineOffset);
             }
-        } else if (matchAndConsume('*')) {
-            tokenList.addToken(STAR, "*", start, position, line, lineOffset);
         } else if (matchAndConsume('>')) {
             if (matchAndConsume('=')) {
                 tokenList.addToken(GREATER_EQUAL, ">=", start, position, line, lineOffset);
@@ -126,7 +164,7 @@ public class CatScriptTokenizer {
     }
 
     private void consumeWhitespace() {
-        ~// TODO update line and lineOffsets
+        // TODO update line and lineOffsets
         while (!tokenizationEnd()) {
             char c = peek();
             if (c == ' ' || c == '\r' || c == '\t') {
@@ -134,6 +172,8 @@ public class CatScriptTokenizer {
                 continue;
             } else if (c == '\n') {
                 position++;
+                line++;
+                lineOffset++;
                 continue;
             }
             break;

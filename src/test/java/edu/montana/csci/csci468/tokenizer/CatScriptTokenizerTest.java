@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CatScriptTokenizerTest extends CatscriptTestBase {
 
     @Test
-    public void basicTokenizerTest(){
+    public void basicTokenizerTest() {
         assertTokensAre("1 + 1", INTEGER, PLUS, INTEGER, EOF);
         assertTokensAre("1 + 1", "1", "+", "1", "<EOF>");
         assertTokensAre("1   +   1", INTEGER, PLUS, INTEGER, EOF);
@@ -21,63 +21,53 @@ public class CatScriptTokenizerTest extends CatscriptTestBase {
     }
 
     @Test
-    public void basicNumbers(){
+    public void basicNumbers() {
         assertTokensAre("1", INTEGER, EOF);
-        assertTokensAre( "1", "1", "<EOF>");
+        assertTokensAre("1", "1", "<EOF>");
         assertTokensAre("1 10 234234", INTEGER, INTEGER, INTEGER, EOF);
         assertTokensAre("1 10 234234", "1", "10", "234234", "<EOF>");
     }
 
     @Test
-    public void basicString(){
+    public void basicString() {
         assertTokensAre("\"asdf\"", STRING, EOF);
-        assertTokensAre( "\"asdf\"", "asdf", "<EOF>");
-
+        assertTokensAre("\"asdf\"", "asdf", "<EOF>");
         assertTokensAre("\"asdf\"\"asdf\"", STRING, STRING, EOF);
-        assertTokensAre( "\"asdf\"\"asdf\"", "asdf", "asdf", "<EOF>");
+        assertTokensAre("\"asdf\"\"asdf\"", "asdf", "asdf", "<EOF>");
     }
 
     @Test
-    public void unterminatedStrings(){
+    public void unterminatedStrings() {
         assertTokensAre("\"asdf", ERROR, EOF);
         assertTokensAre("\"asdf\"\"asdf", STRING, ERROR, EOF);
         assertTokensAre("\"asdf \"asdf\"", STRING, IDENTIFIER, ERROR, EOF);
     }
 
     @Test
-    public void basicIdentifiers(){
+    public void basicIdentifiers() {
         assertTokensAre("asdf", IDENTIFIER, EOF);
-        assertTokensAre( "asdf", "asdf", "<EOF>");
+        assertTokensAre("asdf", "asdf", "<EOF>");
 
         assertTokensAre("asdf asdf", IDENTIFIER, IDENTIFIER, EOF);
-        assertTokensAre( "asdf asdf", "asdf", "asdf", "<EOF>");
+        assertTokensAre("asdf asdf", "asdf", "asdf", "<EOF>");
     }
 
     @Test
-    public void basicKeywords(){
-        assertTokensAre("else false function for if in not null print return true var",
-                ELSE, FALSE, FUNCTION, FOR, IF, IN, NOT, NULL,
-                PRINT, RETURN, TRUE, VAR, EOF);
+    public void basicKeywords() {
+        assertTokensAre("else false function for if in not null print return true var", ELSE, FALSE, FUNCTION, FOR, IF,
+                IN, NOT, NULL, PRINT, RETURN, TRUE, VAR, EOF);
     }
 
     @Test
-    public void basicSyntax(){
-        assertTokensAre("( ) { } [ ] : , . - + / * != = == > >= < <=",
-                LEFT_PAREN, RIGHT_PAREN,
-                LEFT_BRACE, RIGHT_BRACE,
-                LEFT_BRACKET, RIGHT_BRACKET,
-                COLON, COMMA, DOT, MINUS, PLUS, SLASH, STAR,
-                BANG_EQUAL,
-                EQUAL, EQUAL_EQUAL,
-                GREATER, GREATER_EQUAL,
-                LESS, LESS_EQUAL, EOF);
+    public void basicSyntax() {
+        assertTokensAre("( ) { } [ ] : , . - + / * != = == > >= < <=", LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
+                LEFT_BRACKET, RIGHT_BRACKET, COLON, COMMA, DOT, MINUS, PLUS, SLASH, STAR, BANG_EQUAL, EQUAL,
+                EQUAL_EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL, EOF);
     }
 
     @Test
-    public void commentsAreIgnored(){
-        assertTokensAre("/ //   //// asdfasdf \"asdf\"\n" +
-                        "  / // asdf",
-                SLASH, SLASH, EOF);
+    public void commentsAreIgnored() {
+        assertTokensAre("/ //   //// asdfasdf \"asdf\"\n" + "  / // asdf", SLASH, SLASH, EOF);
     }
 
     @Test
@@ -129,10 +119,8 @@ public class CatScriptTokenizerTest extends CatscriptTestBase {
     }
 
     @Test
-    public void varStatement(){
-        assertTokensAre("var x = 10",
-                VAR, IDENTIFIER, EQUAL, INTEGER, EOF);
+    public void varStatement() {
+        assertTokensAre("var x = 10", VAR, IDENTIFIER, EQUAL, INTEGER, EOF);
     }
-
 
 }
