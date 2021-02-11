@@ -24,8 +24,8 @@
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running edu.montana.csci.csci468.tokenizer.CatScriptTokenizerTest
-[ERROR] Tests run: 15, Failures: 0, Errors: 3, Skipped: 0, Time elapsed: 0.105 s <<< FAILURE! - in edu.montana.csci.csci468.tokenizer.CatScriptTokenizerTest
-[ERROR] basicString  Time elapsed: 0.001 s  <<< ERROR!
+[ERROR] Tests run: 15, Failures: 0, Errors: 3, Skipped: 0, Time elapsed: 0.042 s <<< FAILURE! - in edu.montana.csci.csci468.tokenizer.CatScriptTokenizerTest
+[ERROR] basicString  Time elapsed: 0.007 s  <<< ERROR!
 java.lang.StringIndexOutOfBoundsException: String index out of range: 6
 	at edu.montana.csci.csci468.tokenizer.CatScriptTokenizerTest.basicString(CatScriptTokenizerTest.java:33)
 
@@ -33,7 +33,7 @@ java.lang.StringIndexOutOfBoundsException: String index out of range: 6
 java.lang.StringIndexOutOfBoundsException: String index out of range: 5
 	at edu.montana.csci.csci468.tokenizer.CatScriptTokenizerTest.compoundTokensTokenizeProperly(CatScriptTokenizerTest.java:76)
 
-[ERROR] unterminatedStrings  Time elapsed: 0.002 s  <<< ERROR!
+[ERROR] unterminatedStrings  Time elapsed: 0.001 s  <<< ERROR!
 java.lang.StringIndexOutOfBoundsException: String index out of range: 5
 	at edu.montana.csci.csci468.tokenizer.CatScriptTokenizerTest.unterminatedStrings(CatScriptTokenizerTest.java:41)
 
@@ -50,8 +50,8 @@ java.lang.StringIndexOutOfBoundsException: String index out of range: 5
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  3.434 s
-[INFO] Finished at: 2021-02-09T11:04:15-07:00
+[INFO] Total time:  1.949 s
+[INFO] Finished at: 2021-02-11T08:47:05-07:00
 [INFO] ------------------------------------------------------------------------
 [ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:2.22.1:test (default-test) on project CSCI_466_Project: There are test failures.
 [ERROR] 
