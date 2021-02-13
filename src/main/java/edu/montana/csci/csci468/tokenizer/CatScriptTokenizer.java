@@ -45,24 +45,29 @@ public class CatScriptTokenizer {
     }
 
     private boolean scanString() {
-        // if(peek() == '"') {
-        //     int start = position;
-        //     takeChar();
-        //     while (peek() != '"' && !tokenizationEnd()) {
-        //         if(peek() == '\n') {
-        //             position ++;
-        //             line++;
-        //             lineOffset++;
-        //         }
-        //         takeChar();
-        //     }
-        //     if(tokenizationEnd()) {
-        //         tokenList.addToken(ERROR, "Error" , start, position, line, lineOffset);
-        //     }
-        //     String value = src.substring(start, position)
-        // }
+        boolean endquote = true;
+        if (peek() == '"') {
+            takeChar();
+            int start = position;
+            while (!tokenizationEnd()) {
+                if (peek() == '"') {
+                    String value = src.substring(start, position);
+                    tokenList.addToken(STRING, value, start, position, line, lineOffset);
+                    takeChar();
+                    return true;
+                }
+                takeChar();
+                if (tokenizationEnd()) {
+                    tokenList.addToken(ERROR, "No closing String", start, position, line, lineOffset);
+                    return true;
+                }
+
+            }
+            tokenList.addToken(ERROR, "No closing String", start, position, line, lineOffset);
+            return true;
+        }
+
         return false;
-        // TODO implement string scanning here!
     }
 
     private boolean scanIdentifier() {
