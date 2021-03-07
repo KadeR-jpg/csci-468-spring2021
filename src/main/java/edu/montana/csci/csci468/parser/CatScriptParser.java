@@ -1,4 +1,4 @@
-package edu.montana.csci.csci468.parser;
+ package edu.montana.csci.csci468.parser;
 
 import edu.montana.csci.csci468.parser.expressions.*;
 import edu.montana.csci.csci468.parser.statements.*;
@@ -44,9 +44,9 @@ public class CatScriptParser {
         return program;
     }
 
-    //============================================================
-    //  Statements
-    //============================================================
+    // ============================================================
+    // Statements
+    // ============================================================
 
     private Statement parseProgramStatement() {
         Statement printStmt = parsePrintStatement();
@@ -72,16 +72,16 @@ public class CatScriptParser {
         }
     }
 
-    //============================================================
-    //  Expressions
-    //============================================================
+    // ============================================================
+    // Expressions
+    // ============================================================
 
     private Expression parseExpression() {
-        return parseAdditiveExpression();
+        return parseComparisionExpression();
     }
 
     private Expression parseAdditiveExpression() {
-        Expression expression = parseUnaryExpression();
+        Expression expression = parseFactorExpression();
         while (tokens.match(PLUS, MINUS)) {
             Token operator = tokens.consumeToken();
             final Expression rightHandSide = parseUnaryExpression();
@@ -112,21 +112,59 @@ public class CatScriptParser {
             IntegerLiteralExpression integerExpression = new IntegerLiteralExpression(integerToken.getStringValue());
             integerExpression.setToken(integerToken);
             return integerExpression;
+        } else if (tokens.match(STRING)) {
+            Token strTOKEN = tokens.consumeToken();
+            StringLiteralExpression strExpression = new StringLiteralExpression(strTOKEN.getStringValue());
+            strExpression.setToken(strTOKEN);
+            return strExpression;
+        } else if (tokens.match(TRUE) || tokens.match(FALSE)) {
+            Token boolTOKEN = tokens.consumeToken();
+            BooleanLiteralExpression boolEXP;
+            if (boolTOKEN.getType() == TRUE) {
+                boolEXP = new BooleanLiteralExpression(true);
+            } else {
+                boolEXP = new BooleanLiteralExpression(false);
+            }
+            return boolEXP;
         } else {
             SyntaxErrorExpression syntaxErrorExpression = new SyntaxErrorExpression(tokens.consumeToken());
             return syntaxErrorExpression;
         }
     }
 
-    //============================================================
-    //  Parse Helpers
-    //============================================================
+    private Expression parseComparisionExpression() {
+        Expression lhs = parseAdditiveExpression();
+        if (tokens.match(GREATER) || tokens.match(GREATER_EQUAL) || tokens.match(LESS) || tokens.match(LESS_EQUAL)) {
+            Token compTOKEN = tokens.consumeToken();
+            Expression rhs = parseAdditiveExpression();
+            return new ComparisonExpression(compTOKEN, lhs, rhs);
+        }
+        return lhs;
+    }
+
+    private Expression parseFactorExpression() {
+        Expression lhs = parseUnaryExpression();
+        if(tokens.match(STAR) || tokens.match(SLASH)) {
+            Token factorTOKEN = tokens.consumeToken();
+            Expression rhs = parseUnaryExpression();
+            FactorExpression factEXP = new FactorExpression(factorTOKEN, lhs, rhs);
+            factEXP.setStart(lhs.getStart());
+            factEXP.setEnd(rhs.getEnd());
+            lhs = factEXP;
+        }
+        return lhs;
+
+    }
+
+    // ============================================================
+    // Parse Helpers
+    // ============================================================
     private Token require(TokenType type, ParseElement elt) {
         return require(type, elt, ErrorType.UNEXPECTED_TOKEN);
     }
 
     private Token require(TokenType type, ParseElement elt, ErrorType msg) {
-        if(tokens.match(type)){
+        if (tokens.match(type)) {
             return tokens.consumeToken();
         } else {
             elt.addError(msg, tokens.getCurrentToken());
