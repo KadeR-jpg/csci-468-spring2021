@@ -138,7 +138,7 @@ public class CatScriptTokenizer {
                     takeChar();
                 }
             } else {
-                tokenList.addToken(SLASH, "-", start, position, line, lineOffset);
+                tokenList.addToken(SLASH, "/", start, position, line, lineOffset);
             }
         } else if (matchAndConsume('=')) {
             if (matchAndConsume('=')) {
