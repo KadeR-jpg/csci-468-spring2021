@@ -6,7 +6,7 @@ import edu.montana.csci.csci468.tokenizer.CatScriptTokenizer;
 import edu.montana.csci.csci468.tokenizer.Token;
 import edu.montana.csci.csci468.tokenizer.TokenList;
 import edu.montana.csci.csci468.tokenizer.TokenType;
-//import jdk.incubator.jpackage.main.CommandLine.Tokenizer;
+import jdk.incubator.jpackage.main.CommandLine.Tokenizer;
 
 import static edu.montana.csci.csci468.tokenizer.TokenType.*;
 
@@ -79,26 +79,99 @@ public class CatScriptParser {
     }
 
     private Statement parseStatement() {
-        if(tokens.match(FUNCTION)) {
+        if (tokens.match(FUNCTION)) {
             return parseFunctionDeclaration();
-        } else if(tokens.match(FOR)) {
+        } else if (tokens.match(FOR)) {
             return parseForStatement();
         } else if (tokens.match(PRINT)) {
             return parsePrintStatement();
+        } else if (tokens.match(VAR)) {
+            return parseVarStatement();
+        } else if (tokens.match(IF)) {
+            return parseIfStatement();
+        } else if (tokens.match(IDENTIFIER)) {
+            Token token = tokens.consumeToken();
+            if (tokens.matchAndConsume(LEFT_PAREN)) {
+                FunctionCallExpression exp = (FunctionCallExpression) parseFunctionCall(token);
+                return new FunctionCallStatement(exp);
             }
+            return parseAssignmentStatement(token);
+        } else {
+            return new SyntaxErrorStatement(tokens.consumeToken());
+        }
+    }
+
+    private Statement parseVarStatement() {
         return null;
     }
 
     private Statement parseFunctionDeclaration() {
-        return null;
+        FunctionDefinitionStatement funcDefinition = new FunctionDefinitionStatement();
+        funcDefinition.setStart(tokens.consumeToken());
+        Token function = tokens.consumeToken();
+        funcDefinition.setName(function.getStringValue());
+        require(LEFT_PAREN, funcDefinition);
+        List<ParameterStatement> paramsList = parseParameterList();
+        for (ParameterStatement stmt : paramsList) {
+            funcDefinition.addParameter(stmt.getIdentifierName(), stmt.getType());
+        }
+        require(RIGHT_PAREN, funcDefinition);
+        if (tokens.match(COLON)) {
+            funcDefinition.setType(parseTypeExpression());
+        } else {
+            TypeLiteral voidType = new TypeLiteral();
+            funcDefinition.setType(voidType);
+        }
+        require(LEFT_BRACE, funcDefinition);
+        require(RIGHT_BRACE, funcDefinition);
+        funcDefinition.setEnd(tokens.lastToken());
+        return funcDefinition;
+    }
+
+    private List<ParameterStatement> parseParameterlList() {
+        List<ParameterStatement> paramsList = new ArrayList<>();
+        while (tokens.match(IDENTIFIER)) {
+            paramsList.add(parseParameter());
+            if (!tokens.match(COMMA)) {
+                break;
+            } else {
+                tokens.consumeToken();
+            }
+        }
+        return paramsList;
+    }
+
+    private ParameterStatement parseParameter() {
+        ParameterStatement paramStmt = new ParameterStatement();
+        paramStmt.setIdentifierName(tokens.consumeToken().getStringValue());
+        if (tokens.matchAndConsume(COLON)) {
+            paramStmt.setType(parseTypeExpression());
+            return paramStmt;
+        }
+        return paramStmt;
+
+    }
+
+    private List<Statement> parseFunctionBody() {
+        List<Statement> stmtList = new ArrayList<>();
+        while (!tokens.match(RIGHT_BRACE)) {
+            if (tokens.match(EOF)) {
+                return stmtList;
+            } else if (tokens.match(RETURN)) {
+                stmtList.add(parseReturnStatemetn());
+                return stmtList;
+            }
+            stmtList.add(parseStatement());
+        }
+        return stmtList;
     }
 
     private Statement parseForStatement() {
         return null;
     }
 
-    private Statement parseIfStatement(Token identifier) {
-        return  null;
+    private Statement parseIfStatement() {
+        return null;
     }
 
     private Statement parseAssignmentStatement(Token identifier) {
@@ -112,8 +185,19 @@ public class CatScriptParser {
         return assignStmt;
     }
 
-    private Statement parseVariablStatement(Token identifier) {
+    private Statement parseVariablStatement() {
         return null;
+    }
+
+    private Statement parseReturStatement() {
+        ReturnStatement retStmt = new ReturnStatement();
+        retStmt.setStart(tokens.consumeToken());
+        if (!tokens.match(RIGHT_BRACE)) {
+            Expression exp = parseExpression();
+            retStmt.setExpression(exp);
+        }
+        retStmt.setEnd(tokens.lastToken());
+        retStmt.setFunctionDefinition(func);
     }
 
     // ============================================================
@@ -225,11 +309,6 @@ public class CatScriptParser {
             }
             tokens.consumeToken();
             return parenExp;
-        } else if (tokens.match(NULL)) {
-            Token nullToken = tokens.consumeToken();
-            NullLiteralExpression nullExp = new NullLiteralExpression();
-            nullExp.setToken(nullToken);
-            return nullExp;
         } else if (tokens.match(IDENTIFIER)) {
             Token token = tokens.consumeToken();
             if (tokens.match(LEFT_PAREN)) {
@@ -241,8 +320,7 @@ public class CatScriptParser {
                 return iExp;
             }
         } else {
-            SyntaxErrorExpression synErr = new SyntaxErrorExpression(tokens.consumeToken());
-            return synErr;
+            return new SyntaxErrorExpression(tokens.consumeToken());
         }
     }
 
@@ -267,7 +345,7 @@ public class CatScriptParser {
 
     private Expression parseListLiteral() {
         tokens.consumeToken();
-        List<Expression> expList = new ArrayList<Expression>();
+        List<Expression> expList = new ArrayList<>();
         while (!tokens.match(RIGHT_BRACKET)) {
             if (!tokens.hasMoreTokens()) {
                 ListLiteralExpression errList = new ListLiteralExpression(expList);
