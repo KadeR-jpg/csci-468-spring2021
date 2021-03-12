@@ -6,7 +6,7 @@ import edu.montana.csci.csci468.tokenizer.CatScriptTokenizer;
 import edu.montana.csci.csci468.tokenizer.Token;
 import edu.montana.csci.csci468.tokenizer.TokenList;
 import edu.montana.csci.csci468.tokenizer.TokenType;
-import jdk.incubator.jpackage.main.CommandLine.Tokenizer;
+//import jdk.incubator.jpackage.main.CommandLine.Tokenizer;
 
 import static edu.montana.csci.csci468.tokenizer.TokenType.*;
 
@@ -111,10 +111,7 @@ public class CatScriptParser {
         Token function = tokens.consumeToken();
         funcDefinition.setName(function.getStringValue());
         require(LEFT_PAREN, funcDefinition);
-        List<ParameterStatement> paramsList = parseParameterList();
-        for (ParameterStatement stmt : paramsList) {
-            funcDefinition.addParameter(stmt.getIdentifierName(), stmt.getType());
-        }
+        // Add stuff here, add the statements to the list
         require(RIGHT_PAREN, funcDefinition);
         if (tokens.match(COLON)) {
             funcDefinition.setType(parseTypeExpression());
@@ -123,33 +120,13 @@ public class CatScriptParser {
             funcDefinition.setType(voidType);
         }
         require(LEFT_BRACE, funcDefinition);
+        currentFunctionDefinition = funcDefinition;
+        funcDefinition.setBody(parseFunctionBody());
         require(RIGHT_BRACE, funcDefinition);
         funcDefinition.setEnd(tokens.lastToken());
+
+        currentFunctionDefinition = funcDefinition;
         return funcDefinition;
-    }
-
-    private List<ParameterStatement> parseParameterlList() {
-        List<ParameterStatement> paramsList = new ArrayList<>();
-        while (tokens.match(IDENTIFIER)) {
-            paramsList.add(parseParameter());
-            if (!tokens.match(COMMA)) {
-                break;
-            } else {
-                tokens.consumeToken();
-            }
-        }
-        return paramsList;
-    }
-
-    private ParameterStatement parseParameter() {
-        ParameterStatement paramStmt = new ParameterStatement();
-        paramStmt.setIdentifierName(tokens.consumeToken().getStringValue());
-        if (tokens.matchAndConsume(COLON)) {
-            paramStmt.setType(parseTypeExpression());
-            return paramStmt;
-        }
-        return paramStmt;
-
     }
 
     private List<Statement> parseFunctionBody() {
@@ -158,16 +135,12 @@ public class CatScriptParser {
             if (tokens.match(EOF)) {
                 return stmtList;
             } else if (tokens.match(RETURN)) {
-                stmtList.add(parseReturnStatemetn());
+                stmtList.add(parseReturnStatement());
                 return stmtList;
             }
             stmtList.add(parseStatement());
         }
         return stmtList;
-    }
-
-    private Statement parseForStatement() {
-        return null;
     }
 
     private Statement parseIfStatement() {
@@ -189,7 +162,30 @@ public class CatScriptParser {
         return null;
     }
 
-    private Statement parseReturStatement() {
+    private Statement parseForStatement() {
+        ForStatement forStmt = new ForStatement();
+        ArrayList<Statement> stmt = new ArrayList<>();
+        forStmt.setStart(tokens.consumeToken());
+        require(LEFT_PAREN, forStmt);
+//        Token ideToken = new tokens.consumeToken();
+//        forStmt.setVariableName(ideToken.getStringValue());
+        require(IN, forStmt);
+        forStmt.setExpression(parseExpression());
+        require(RIGHT_PAREN, forStmt);
+        require(LEFT_PAREN, forStmt);
+        while (!tokens.match(RIGHT_BRACE)) {
+            if (tokens.match(RIGHT_BRACE)) {
+                forStmt.addError(ErrorType.UNEXPECTED_TOKEN);
+                return forStmt;
+            }
+            stmt.add(parseStatement());
+        }
+        forStmt.setBody(stmt);
+        forStmt.setEnd(require(RIGHT_BRACE, forStmt));
+        return forStmt;
+    }
+
+    private Statement parseReturnStatement() {
         ReturnStatement retStmt = new ReturnStatement();
         retStmt.setStart(tokens.consumeToken());
         if (!tokens.match(RIGHT_BRACE)) {
@@ -197,7 +193,8 @@ public class CatScriptParser {
             retStmt.setExpression(exp);
         }
         retStmt.setEnd(tokens.lastToken());
-        retStmt.setFunctionDefinition(func);
+        retStmt.setFunctionDefinition(currentFunctionDefinition);
+        return retStmt;
     }
 
     // ============================================================
@@ -236,9 +233,9 @@ public class CatScriptParser {
 
     private Expression parseAdditiveExpression() {
         Expression expression = parseFactorExpression();
-        while (tokens.match(PLUS, MINUS)) {
+        if (tokens.match(PLUS, MINUS)) {
             Token operator = tokens.consumeToken();
-            final Expression rightHandSide = parseUnaryExpression();
+            final Expression rightHandSide = parseFactorExpression();
             AdditiveExpression additiveExpression = new AdditiveExpression(operator, expression, rightHandSide);
             additiveExpression.setStart(expression.getStart());
             additiveExpression.setEnd(rightHandSide.getEnd());
@@ -251,7 +248,7 @@ public class CatScriptParser {
         Expression unaryLhs = parseUnaryExpression();
         while (tokens.match(STAR, SLASH)) {
             Token factorTOKEN = tokens.consumeToken();
-            final Expression unaryRhs = parseUnaryExpression();
+            Expression unaryRhs = parseUnaryExpression();
             FactorExpression factEXP = new FactorExpression(factorTOKEN, unaryLhs, unaryRhs);
             factEXP.setStart(unaryLhs.getStart());
             factEXP.setEnd(unaryRhs.getEnd());

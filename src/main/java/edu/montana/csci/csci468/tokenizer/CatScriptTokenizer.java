@@ -163,18 +163,6 @@ public class CatScriptTokenizer {
             } else {
                 tokenList.addToken(LESS, "<", start, position, line, lineOffset);
             }
-        } else if (matchAndConsume('/')) {
-            tokenList.addToken(SLASH, "/", start, position, line, lineOffset);
-
-        } else if (matchAndConsume('/')) {
-            if (matchAndConsume('/')) {
-                while (!tokenizationEnd() && peek() != '\n') {
-                    takeChar();
-                }
-            } else {
-                tokenList.addToken(SLASH, "/", start, position, line, lineOffset);
-            }
-
         } else {
             tokenList.addToken(ERROR, "<Unexpected Token: [" + takeChar() + "]>", start, position, line, lineOffset);
         }
