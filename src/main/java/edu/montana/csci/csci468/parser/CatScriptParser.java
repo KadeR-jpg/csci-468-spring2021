@@ -367,7 +367,7 @@ public class CatScriptParser {
     /**
      * parsePrimaryExpression() is where we handle types Here we can return the
      * token type. So when we encounter the literal expressions such as 1+1+1. That
-     * expression would be evaluated to \ an IntegerLiteral expression. So this
+     * expression would be evaluated to  an IntegerLiteral expression. So this
      * class handles all similar occurences.
      * 
      * @return Expression
