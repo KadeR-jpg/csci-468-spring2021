@@ -41,7 +41,7 @@ public class UnaryExpression extends Expression {
         rightHandSide.validate(symbolTable);
         if (isNot() && !rightHandSide.getType().equals(CatscriptType.BOOLEAN)) {
             addError(ErrorType.INCOMPATIBLE_TYPES);
-        } else if(isMinus() && !rightHandSide.getType().equals(CatscriptType.INT)) {
+        } else if (isMinus() && !rightHandSide.getType().equals(CatscriptType.INT)) {
             addError(ErrorType.INCOMPATIBLE_TYPES);
         }
     }
@@ -55,9 +55,9 @@ public class UnaryExpression extends Expression {
         }
     }
 
-    //==============================================================
+    // ==============================================================
     // Implementation
-    //==============================================================
+    // ==============================================================
 
     @Override
     public Object evaluate(CatscriptRuntime runtime) {
@@ -78,6 +78,5 @@ public class UnaryExpression extends Expression {
     public void compile(ByteCodeGenerator code) {
         super.compile(code);
     }
-
 
 }

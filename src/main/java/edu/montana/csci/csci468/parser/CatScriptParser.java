@@ -20,6 +20,10 @@ public class CatScriptParser {
     private TokenList tokens;
     private FunctionDefinitionStatement currentFunctionDefinition;
 
+    /**
+     * @param source
+     * @return CatScriptProgram
+     */
     public CatScriptProgram parse(String source) {
         tokens = new CatScriptTokenizer(source).getTokens();
 
@@ -40,6 +44,10 @@ public class CatScriptParser {
         return program;
     }
 
+    /**
+     * @param source
+     * @return CatScriptProgram
+     */
     public CatScriptProgram parseAsExpression(String source) {
         tokens = new CatScriptTokenizer(source).getTokens();
         CatScriptProgram program = new CatScriptProgram();
@@ -50,6 +58,9 @@ public class CatScriptParser {
         return program;
     }
 
+    /**
+     * @return Statement
+     */
     // ============================================================
     // Statements
     // ============================================================
@@ -62,6 +73,9 @@ public class CatScriptParser {
         return new SyntaxErrorStatement(tokens.consumeToken());
     }
 
+    /**
+     * @return Statement
+     */
     private Statement parsePrintStatement() {
         if (tokens.match(PRINT)) {
 
@@ -78,6 +92,9 @@ public class CatScriptParser {
         }
     }
 
+    /**
+     * @return Statement
+     */
     private Statement parseStatement() {
         if (tokens.match(FUNCTION)) {
             return parseFunctionDeclaration();
@@ -101,10 +118,16 @@ public class CatScriptParser {
         }
     }
 
+    /**
+     * @return Statement
+     */
     private Statement parseVarStatement() {
         return null;
     }
 
+    /**
+     * @return Statement
+     */
     private Statement parseFunctionDeclaration() {
         FunctionDefinitionStatement funcDefinition = new FunctionDefinitionStatement();
         funcDefinition.setStart(tokens.consumeToken());
@@ -129,6 +152,9 @@ public class CatScriptParser {
         return funcDefinition;
     }
 
+    /**
+     * @return List<Statement>
+     */
     private List<Statement> parseFunctionBody() {
         List<Statement> stmtList = new ArrayList<>();
         while (!tokens.match(RIGHT_BRACE)) {
@@ -143,10 +169,17 @@ public class CatScriptParser {
         return stmtList;
     }
 
+    /**
+     * @return Statement
+     */
     private Statement parseIfStatement() {
         return null;
     }
 
+    /**
+     * @param identifier
+     * @return Statement
+     */
     private Statement parseAssignmentStatement(Token identifier) {
         AssignmentStatement assignStmt = new AssignmentStatement();
         Token identity = identifier;
@@ -158,17 +191,23 @@ public class CatScriptParser {
         return assignStmt;
     }
 
+    /**
+     * @return Statement
+     */
     private Statement parseVariablStatement() {
         return null;
     }
 
+    /**
+     * @return Statement
+     */
     private Statement parseForStatement() {
         ForStatement forStmt = new ForStatement();
         ArrayList<Statement> stmt = new ArrayList<>();
         forStmt.setStart(tokens.consumeToken());
         require(LEFT_PAREN, forStmt);
-//        Token ideToken = new tokens.consumeToken();
-//        forStmt.setVariableName(ideToken.getStringValue());
+        // Token ideToken = new tokens.consumeToken();
+        // forStmt.setVariableName(ideToken.getStringValue());
         require(IN, forStmt);
         forStmt.setExpression(parseExpression());
         require(RIGHT_PAREN, forStmt);
@@ -185,6 +224,9 @@ public class CatScriptParser {
         return forStmt;
     }
 
+    /**
+     * @return Statement
+     */
     private Statement parseReturnStatement() {
         ReturnStatement retStmt = new ReturnStatement();
         retStmt.setStart(tokens.consumeToken());
@@ -200,16 +242,37 @@ public class CatScriptParser {
     // ============================================================
     // Expressions
     // ============================================================
-
+    /**
+     * parseExpression() is our "top level" Expression that will be called. This is
+     * the start of our recursive descent.
+     * 
+     * @return parseEqualityExpression()
+     */
     private Expression parseExpression() {
         return parseEqualityExpression();
     }
 
+    /**
+     * parseEqualityExpression() is the next in line for recursive descent. Here we
+     * set the LHS of the expression to a comparison expression and this LHS "falls
+     * down" the class list until it hits a token that matches and then it gets
+     * returned to this class and the expression solving continues in a similar
+     * fashion After the program finds a token match we know that the LHS of the
+     * expression has been "solved" so then we consume the equality token and the
+     * RHS of the equation does the same descent down Once that side has returned we
+     * can then send both sides to the EqualityExpression class to be evaluated then
+     * we make sure that we are capturing the whole expression and setting that
+     * equal to the LHS of the expression incase there is more expression to
+     * evaluate and return that to either end the parsing or to start it all over
+     * again.
+     * 
+     * @return EqualityExpression
+     */
     private Expression parseEqualityExpression() {
-        Expression equalityLhs = parseComparisionExpression();
+        Expression equalityLhs = parseComparisonExpression();
         if (tokens.match(EQUAL_EQUAL, BANG_EQUAL)) {
             Token equalityTOKEN = tokens.consumeToken();
-            Expression equalityRhs = parseComparisionExpression();
+            Expression equalityRhs = parseComparisonExpression();
             EqualityExpression equalityExp = new EqualityExpression(equalityTOKEN, equalityLhs, equalityRhs);
             equalityExp.setStart(equalityLhs.getStart());
             equalityExp.setEnd(equalityRhs.getEnd());
@@ -218,7 +281,13 @@ public class CatScriptParser {
         return equalityLhs;
     }
 
-    private Expression parseComparisionExpression() {
+    /**
+     * parseComparisonExpression() behaves the same as parseEqualityExpression()
+     * just returns a different type of expression.
+     * 
+     * @return ComparisonExpression()
+     */
+    private Expression parseComparisonExpression() {
         Expression compLhs = parseAdditiveExpression();
         if (tokens.match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
             Token compTOKEN = tokens.consumeToken();
@@ -231,9 +300,15 @@ public class CatScriptParser {
         return compLhs;
     }
 
+    /**
+     * parseAdditiveExpression() also behaves pretty similar to the other two above
+     * the only difference here is that we can have a while() loop for readability.
+     * 
+     * @return AdditiveExpression()
+     */
     private Expression parseAdditiveExpression() {
         Expression expression = parseFactorExpression();
-        if (tokens.match(PLUS, MINUS)) {
+        while (tokens.match(PLUS, MINUS)) {
             Token operator = tokens.consumeToken();
             final Expression rightHandSide = parseFactorExpression();
             AdditiveExpression additiveExpression = new AdditiveExpression(operator, expression, rightHandSide);
@@ -244,6 +319,12 @@ public class CatScriptParser {
         return expression;
     }
 
+    /**
+     * parseFactorExpression() works the same as the class above just returns a
+     * different type of expression
+     * 
+     * @return FactorExpression()
+     */
     private Expression parseFactorExpression() {
         Expression unaryLhs = parseUnaryExpression();
         while (tokens.match(STAR, SLASH)) {
@@ -257,6 +338,19 @@ public class CatScriptParser {
         return unaryLhs;
     }
 
+    /**
+     * parseUnaryExpression() is our base level expression the smallest kind we deal
+     * with. here we have no LHS side to set it equal to because if it reaches this
+     * portion of the code then the only operations that it can have are are a "-"
+     * that would return us a negative number and the "!" bool which is just our
+     * bool operator. But besides that the class is pretty similar to the rest.
+     * Shout out recursive descent. If it is not a MINUS or a NOT then it gets
+     * returned to the parsePrimaryExpression() which handles the several different
+     * variations of a primary expression.
+     * 
+     * @return unaryExpression()
+     * @return parsePrimaryExpression()
+     */
     private Expression parseUnaryExpression() {
         if (tokens.match(MINUS, NOT)) {
             Token token = tokens.consumeToken();
@@ -270,11 +364,19 @@ public class CatScriptParser {
         }
     }
 
+    /**parsePrimaryExpression() is where we handle types
+     * Here we can return the token type.
+     * So when we encounter the literal expressions 
+     * such as 1+1+1. That expression would be evaluated to \
+     * an IntegerLiteral expression. So this class handles all 
+     * similar occurences.
+     * @return Expression
+     */
     private Expression parsePrimaryExpression() {
         if (tokens.match(INTEGER)) {
-            Token integerToken = tokens.consumeToken();
-            IntegerLiteralExpression integerExpression = new IntegerLiteralExpression(integerToken.getStringValue());
-            integerExpression.setToken(integerToken);
+            Token integerTOKEN = tokens.consumeToken();
+            IntegerLiteralExpression integerExpression = new IntegerLiteralExpression(integerTOKEN.getStringValue());
+            integerExpression.setToken(integerTOKEN);
             return integerExpression;
         } else if (tokens.match(STRING)) {
             Token strTOKEN = tokens.consumeToken();
@@ -286,7 +388,7 @@ public class CatScriptParser {
             NullLiteralExpression nullEXP = new NullLiteralExpression();
             nullEXP.setToken(nullTOKEN);
             return nullEXP;
-        } else if (tokens.match(TRUE) || tokens.match(FALSE)) { // Boolean
+        } else if (tokens.match(TRUE) || tokens.match(FALSE)) {
             Token boolTOKEN = tokens.consumeToken();
             BooleanLiteralExpression boolEXP;
             if (boolTOKEN.getType() == TRUE) {
@@ -298,7 +400,7 @@ public class CatScriptParser {
             return boolEXP;
         } else if (tokens.match(LEFT_BRACKET)) {
             return parseListLiteral();
-        } else if (tokens.match(LEFT_PAREN)) { // Paren Expressions
+        } else if (tokens.match(LEFT_PAREN)) {
             tokens.consumeToken();
             ParenthesizedExpression parenExp = null;
             while (!tokens.match(RIGHT_PAREN)) {
@@ -321,6 +423,10 @@ public class CatScriptParser {
         }
     }
 
+    /**
+     * @param token
+     * @return Expression
+     */
     private Expression parseFunctionCall(Token token) {
         List<Expression> expList = new ArrayList<>();
         while (!tokens.match(RIGHT_PAREN)) {
@@ -340,6 +446,9 @@ public class CatScriptParser {
         return new FunctionCallExpression(token.getStringValue(), expList);
     }
 
+    /**
+     * 
+     */
     private Expression parseListLiteral() {
         tokens.consumeToken();
         List<Expression> expList = new ArrayList<>();
@@ -359,6 +468,9 @@ public class CatScriptParser {
         return new ListLiteralExpression(expList);
     }
 
+    /**
+     * @return TypeLiteral
+     */
     private TypeLiteral parseTypeExpression() {
         String token = tokens.consumeToken().getStringValue();
         TypeLiteral typeLIT = new TypeLiteral();
@@ -396,6 +508,11 @@ public class CatScriptParser {
         return typeLIT;
     }
 
+    /**
+     * @param type
+     * @param elt
+     * @return Token
+     */
     // ============================================================
     // Parse Helpers
     // ============================================================
@@ -403,6 +520,12 @@ public class CatScriptParser {
         return require(type, elt, ErrorType.UNEXPECTED_TOKEN);
     }
 
+    /**
+     * @param type
+     * @param elt
+     * @param msg
+     * @return Token
+     */
     private Token require(TokenType type, ParseElement elt, ErrorType msg) {
         if (tokens.match(type)) {
             return tokens.consumeToken();
