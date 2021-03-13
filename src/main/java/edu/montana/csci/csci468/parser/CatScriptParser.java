@@ -13,7 +13,7 @@ import static edu.montana.csci.csci468.tokenizer.TokenType.*;
 import java.util.function.Function;
 import java.rmi.server.ExportException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.List:
 
 public class CatScriptParser {
 
@@ -364,12 +364,12 @@ public class CatScriptParser {
         }
     }
 
-    /**parsePrimaryExpression() is where we handle types
-     * Here we can return the token type.
-     * So when we encounter the literal expressions 
-     * such as 1+1+1. That expression would be evaluated to \
-     * an IntegerLiteral expression. So this class handles all 
-     * similar occurences.
+    /**
+     * parsePrimaryExpression() is where we handle types Here we can return the
+     * token type. So when we encounter the literal expressions such as 1+1+1. That
+     * expression would be evaluated to \ an IntegerLiteral expression. So this
+     * class handles all similar occurences.
+     * 
      * @return Expression
      */
     private Expression parsePrimaryExpression() {
