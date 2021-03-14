@@ -21,8 +21,8 @@
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  1.392 s
-[INFO] Finished at: 2021-03-12T21:11:20-07:00
+[INFO] Total time:  1.289 s
+[INFO] Finished at: 2021-03-14T14:02:43-06:00
 [INFO] ------------------------------------------------------------------------
 [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.1:compile (default-compile) on project CSCI_466_Project: Compilation failure
 [ERROR] /home/carson/Projects/msu/csci-466-spring2021/grading/scripts/repos/kade_pitsch/src/main/java/edu/montana/csci/csci468/parser/CatScriptParser.java:[16,22] ';' expected
