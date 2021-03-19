@@ -13,7 +13,7 @@ import static edu.montana.csci.csci468.tokenizer.TokenType.*;
 import java.util.function.Function;
 import java.rmi.server.ExportException;
 import java.util.ArrayList;
-import java.util.List:
+import java.util.List;
 
 public class CatScriptParser {
 
