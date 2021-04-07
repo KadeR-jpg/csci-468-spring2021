@@ -5,11 +5,27 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
-// TODO - implement proper scoping
+import edu.montana.csci.csci468.parser.statements.FunctionDefinitionStatement;
+
 public class CatscriptRuntime {
     LinkedList<Map<String, Object>> scopes = new LinkedList<>();
 
-    public CatscriptRuntime(){
+    public void setFunc(String name, FunctionDefinitionStatement func) {
+        if (scopes.peek() != null) {
+            scopes.peek().put(name, func);
+        }
+    }
+
+    public FunctionDefinitionStatement getFunc(String name) {
+        Object obj = getValue(name);
+        if (obj instanceof FunctionDefinitionStatement) {
+            return (FunctionDefinitionStatement) obj;
+        } else {
+            return null;
+        }
+    }
+
+    public CatscriptRuntime() {
         HashMap<String, Object> globalScope = new HashMap<>();
         scopes.push(globalScope);
     }
@@ -18,21 +34,16 @@ public class CatscriptRuntime {
         Iterator<Map<String, Object>> mapIterator = scopes.descendingIterator();
         while (mapIterator.hasNext()) {
             Map<String, Object> scope = mapIterator.next();
-            if (scope.containsKey(name)) {
-                return scope.get(name);
+            Object getScope = scope.get(name);
+            if (getScope != null) {
+                return getScope;
             }
         }
         return null;
     }
 
     public void setValue(String variableName, Object val) {
-        for (Map<String, Object> scope : scopes) {
-            if (scope.containsKey(variableName)) {
-                scope.put(variableName, val);
-                return;
-            }
-        }
-        scopes.peekLast().put(variableName, val);
+        scopes.peek().put(variableName, val);
     }
 
     public void pushScope() {

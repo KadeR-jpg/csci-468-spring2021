@@ -60,13 +60,19 @@ public class FunctionCallExpression extends Expression {
         }
     }
 
-    //==============================================================
+    // ==============================================================
     // Implementation
-    //==============================================================
+    // ==============================================================
 
     @Override
     public Object evaluate(CatscriptRuntime runtime) {
-        return super.evaluate(runtime);
+        FunctionDefinitionStatement funcDef = (FunctionDefinitionStatement) runtime.getValue(getName());
+        List<Object> eval = new LinkedList<>();
+        for (Expression exp : getArguments()) {
+            eval.add(exp.evaluate(runtime));
+        }
+        return funcDef.invoke(runtime, eval);
+
     }
 
     @Override
@@ -78,6 +84,5 @@ public class FunctionCallExpression extends Expression {
     public void compile(ByteCodeGenerator code) {
         super.compile(code);
     }
-
 
 }

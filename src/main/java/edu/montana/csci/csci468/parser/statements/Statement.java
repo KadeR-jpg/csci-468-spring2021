@@ -3,6 +3,7 @@ package edu.montana.csci.csci468.parser.statements;
 import edu.montana.csci.csci468.bytecode.ByteCodeGenerator;
 import edu.montana.csci.csci468.eval.CatscriptRuntime;
 import edu.montana.csci.csci468.parser.ParseElement;
+import edu.montana.csci.csci468.parser.expressions.TypeLiteral;
 
 public abstract class Statement extends ParseElement {
 

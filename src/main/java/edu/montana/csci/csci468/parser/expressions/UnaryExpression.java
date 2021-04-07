@@ -64,9 +64,10 @@ public class UnaryExpression extends Expression {
         Object rhsValue = getRightHandSide().evaluate(runtime);
         if (this.isMinus()) {
             return -1 * (Integer) rhsValue;
-        } else {
-            return null; // TODO handle boolean NOT
+        } else if (isNot()) {
+            return !(boolean) rhsValue;
         }
+        return null;
     }
 
     @Override

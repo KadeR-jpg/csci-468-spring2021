@@ -17,7 +17,8 @@ public class BooleanLiteralExpression extends Expression {
     }
 
     @Override
-    public void validate(SymbolTable symbolTable) {}
+    public void validate(SymbolTable symbolTable) {
+    }
 
     @Override
     public CatscriptType getType() {
@@ -30,7 +31,7 @@ public class BooleanLiteralExpression extends Expression {
 
     @Override
     public Object evaluate(CatscriptRuntime runtime) {
-        return super.evaluate(runtime);
+        return booleanValue;
     }
 
     @Override

@@ -6,14 +6,16 @@ import edu.montana.csci.csci468.tokenizer.CatScriptTokenizer;
 import edu.montana.csci.csci468.tokenizer.Token;
 import edu.montana.csci.csci468.tokenizer.TokenList;
 import edu.montana.csci.csci468.tokenizer.TokenType;
-//import jdk.incubator.jpackage.main.CommandLine.Tokenizer;
+import org.apache.velocity.app.event.EventCartridge;
 
 import static edu.montana.csci.csci468.tokenizer.TokenType.*;
 
 import java.util.function.Function;
+import javax.swing.plaf.nimbus.State;
 import java.rmi.server.ExportException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedList;
 
 public class CatScriptParser {
 
@@ -64,7 +66,6 @@ public class CatScriptParser {
     // ============================================================
     // Statements
     // ============================================================
-
     private Statement parseProgramStatement() {
         Statement stmt = parseStatement();
         if (stmt != null) {
@@ -76,7 +77,151 @@ public class CatScriptParser {
     /**
      * @return Statement
      */
-    private Statement parsePrintStatement() {
+    private Statement parseStatement() {
+        if (tokens.match(FUNCTION)) {
+            return parseFunction();
+        } else if (tokens.match(FOR)) {
+            return parseFor();
+        } else if (tokens.match(PRINT)) {
+            return parsePrint();
+        } else if (tokens.match(VAR)) {
+            return parseVar();
+        } else if (tokens.match(IF)) {
+            return parseIf();
+        } else if (tokens.match(RETURN)) {
+            return parseReturn();
+        } else if (tokens.match(IDENTIFIER)) {
+            Token token = tokens.consumeToken();
+            if (tokens.matchAndConsume(LEFT_PAREN)) {
+                FunctionCallExpression exp = (FunctionCallExpression) parseFunctionCall(token);
+                return new FunctionCallStatement(exp);
+            }
+            return parseAssignment(token);
+        } else if (tokens.match(EQUAL)) {
+            return parseAssignment(tokens.getCurrentToken());
+        } else {
+            return new SyntaxErrorStatement(tokens.consumeToken());
+        }
+    }
+
+    /**
+     * @return Statement
+     */
+    private Statement parseFunction() {
+        FunctionDefinitionStatement funcDefinition = new FunctionDefinitionStatement();
+        funcDefinition.setStart(tokens.consumeToken());
+        Token function = tokens.consumeToken();
+        funcDefinition.setName(function.getStringValue());
+        require(LEFT_PAREN, funcDefinition);
+        List<Parameter> listOfStatements = paramList();
+        for (Parameter stmt : listOfStatements) {
+            funcDefinition.addParameter(stmt.getIdentifier(), stmt.getType());
+        }
+        // Add stuff here, add the statements to the list
+        require(RIGHT_PAREN, funcDefinition);
+        if (tokens.matchAndConsume(COLON)) {
+            funcDefinition.setType(parseTypeExpression());
+        } else {
+            TypeLiteral voidType = new TypeLiteral();
+            voidType.setType(CatscriptType.VOID);
+            funcDefinition.setType(voidType);
+        }
+        require(LEFT_BRACE, funcDefinition);
+        currentFunctionDefinition = funcDefinition;
+        funcDefinition.setBody(parseFunctionBody());
+        require(RIGHT_BRACE, funcDefinition);
+        funcDefinition.setEnd(tokens.lastToken());
+
+        currentFunctionDefinition = funcDefinition;
+        return funcDefinition;
+    }
+
+    // After doubling checking the grammar i realized that i was
+    // missing the param_list and param list must have a parameter
+
+    /**
+     * The grammar specifies that parameter list must be a parameter or
+     */
+    private List<Parameter> paramList() {
+        List<Parameter> paramList = new LinkedList<>();
+        while (tokens.match(IDENTIFIER)) {
+            paramList.add(parsedParam());
+            if (tokens.match(COMMA)) {
+                tokens.consumeToken();
+            } else {
+                break;
+            }
+
+        }
+        return paramList;
+
+    }
+
+    private Parameter parsedParam() {
+        Parameter param = new Parameter();
+        param.setIdName(tokens.consumeToken().getStringValue());
+        if (tokens.matchAndConsume(COLON)) {
+            param.setType(parseTypeExpression());
+            return param;
+        }
+        return param;
+
+    }
+
+    /**
+     * @return List<Statement>
+     */
+    private List<Statement> parseFunctionBody() {
+        List<Statement> stmtList = new LinkedList<>();
+        boolean nestedStmt = false;
+        while (!tokens.match(RIGHT_BRACE) || nestedStmt) {
+            if (tokens.match(LEFT_BRACKET)) {
+                nestedStmt = true;
+            } else if (tokens.match(RIGHT_BRACE)) {
+                nestedStmt = false;
+            }
+            if (tokens.match(EOF)) {
+                return stmtList;
+            }
+            stmtList.add(parseStatement());
+        }
+        return stmtList;
+    }
+
+    /**
+     * @return Statement
+     */
+    private Statement parseFor() {
+        ForStatement forStmt = new ForStatement();
+        List<Statement> stmt = new LinkedList<>();
+        forStmt.setStart(tokens.consumeToken());
+        require(LEFT_PAREN, forStmt);
+        Token ideToken = tokens.consumeToken();
+        forStmt.setVariableName(ideToken.getStringValue());
+        require(IN, forStmt);
+        forStmt.setExpression(parseExpression());
+        require(RIGHT_PAREN, forStmt);
+        require(LEFT_BRACE, forStmt);
+        if (tokens.match(RIGHT_BRACE)) {
+            forStmt.addError(ErrorType.UNEXPECTED_TOKEN);
+            return forStmt;
+        }
+        do {
+            if (tokens.match(EOF)) {
+                forStmt.addError(ErrorType.UNEXPECTED_TOKEN);
+                return forStmt;
+            }
+            stmt.add(parseStatement());
+        } while (!tokens.match(RIGHT_BRACE));
+        forStmt.setBody(stmt);
+        forStmt.setEnd(require(RIGHT_BRACE, forStmt));
+        return forStmt;
+    }
+
+    /**
+     * @return Statement
+     */
+    private Statement parsePrint() {
         if (tokens.match(PRINT)) {
 
             PrintStatement printStatement = new PrintStatement();
@@ -95,96 +240,66 @@ public class CatScriptParser {
     /**
      * @return Statement
      */
-    private Statement parseStatement() {
-        if (tokens.match(FUNCTION)) {
-            return parseFunctionDeclaration();
-        } else if (tokens.match(FOR)) {
-            return parseForStatement();
-        } else if (tokens.match(PRINT)) {
-            return parsePrintStatement();
-        } else if (tokens.match(VAR)) {
-            return parseVarStatement();
-        } else if (tokens.match(IF)) {
-            return parseIfStatement();
-        } else if (tokens.match(IDENTIFIER)) {
-            Token token = tokens.consumeToken();
-            if (tokens.matchAndConsume(LEFT_PAREN)) {
-                FunctionCallExpression exp = (FunctionCallExpression) parseFunctionCall(token);
-                return new FunctionCallStatement(exp);
-            }
-            return parseAssignmentStatement(token);
-        } else {
-            return new SyntaxErrorStatement(tokens.consumeToken());
-        }
-    }
-
-    /**
-     * @return Statement
-     */
-    private Statement parseVarStatement() {
-        return null;
-    }
-
-    /**
-     * @return Statement
-     */
-    private Statement parseFunctionDeclaration() {
-        FunctionDefinitionStatement funcDefinition = new FunctionDefinitionStatement();
-        funcDefinition.setStart(tokens.consumeToken());
-        Token function = tokens.consumeToken();
-        funcDefinition.setName(function.getStringValue());
-        require(LEFT_PAREN, funcDefinition);
-        // Add stuff here, add the statements to the list
-        require(RIGHT_PAREN, funcDefinition);
+    private Statement parseVar() {
+        VariableStatement varStmt = new VariableStatement();
+        varStmt.setStart(tokens.consumeToken());
+        varStmt.setVariableName(tokens.consumeToken().getStringValue());
         if (tokens.match(COLON)) {
-            funcDefinition.setType(parseTypeExpression());
-        } else {
-            TypeLiteral voidType = new TypeLiteral();
-            funcDefinition.setType(voidType);
+            require(COLON, varStmt);
+            varStmt.setExplicitType(parseTypeExpression().getType());
         }
-        require(LEFT_BRACE, funcDefinition);
-        currentFunctionDefinition = funcDefinition;
-        funcDefinition.setBody(parseFunctionBody());
-        require(RIGHT_BRACE, funcDefinition);
-        funcDefinition.setEnd(tokens.lastToken());
-
-        currentFunctionDefinition = funcDefinition;
-        return funcDefinition;
-    }
-
-    /**
-     * @return List<Statement>
-     */
-    private List<Statement> parseFunctionBody() {
-        List<Statement> stmtList = new ArrayList<>();
-        while (!tokens.match(RIGHT_BRACE)) {
-            if (tokens.match(EOF)) {
-                return stmtList;
-            } else if (tokens.match(RETURN)) {
-                stmtList.add(parseReturnStatement());
-                return stmtList;
-            }
-            stmtList.add(parseStatement());
-        }
-        return stmtList;
+        require(EQUAL, varStmt);
+        Expression exp = parseExpression();
+        varStmt.setExpression(exp);
+        varStmt.setEnd(tokens.lastToken());
+        return varStmt;
     }
 
     /**
      * @return Statement
      */
-    private Statement parseIfStatement() {
-        return null;
+    private Statement parseIf() {
+        IfStatement ifStmt = new IfStatement();
+        List<Statement> listOfIf = new ArrayList<>();
+        List<Statement> listOfElse = new ArrayList<>();
+        ifStmt.setStart(tokens.consumeToken());
+        require(LEFT_PAREN, ifStmt);
+        ifStmt.setExpression(parseExpression());
+        require(RIGHT_PAREN, ifStmt);
+        require(LEFT_BRACE, ifStmt);
+        while (!tokens.match(RIGHT_BRACE)) {
+            if (tokens.match(EOF, ELSE)) {
+                ifStmt.addError(ErrorType.UNEXPECTED_TOKEN);
+                return ifStmt;
+            }
+            listOfIf.add(parseStatement());
+        }
+        ifStmt.setTrueStatements(listOfIf);
+        ifStmt.setEnd(require(RIGHT_BRACE, ifStmt));
+        if (tokens.match(ELSE)) {
+            tokens.consumeToken();
+            require(LEFT_BRACE, ifStmt);
+            while (!tokens.match(RIGHT_BRACE)) {
+                if (tokens.match(EOF)) {
+                    ifStmt.addError(ErrorType.UNEXPECTED_TOKEN);
+                    return ifStmt;
+                }
+                listOfElse.add(parseStatement());
+            }
+            ifStmt.setElseStatements(listOfElse);
+            ifStmt.setEnd(require(RIGHT_BRACE, ifStmt));
+        }
+        return ifStmt;
     }
 
     /**
      * @param identifier
      * @return Statement
      */
-    private Statement parseAssignmentStatement(Token identifier) {
+    private Statement parseAssignment(Token identifier) {
         AssignmentStatement assignStmt = new AssignmentStatement();
-        Token identity = identifier;
-        assignStmt.setStart(identity);
-        assignStmt.setVariableName(identity.getStringValue());
+        assignStmt.setStart(identifier);
+        assignStmt.setVariableName(identifier.getStringValue());
         require(EQUAL, assignStmt);
         assignStmt.setExpression(parseExpression());
         assignStmt.setEnd(tokens.lastToken());
@@ -194,40 +309,7 @@ public class CatScriptParser {
     /**
      * @return Statement
      */
-    private Statement parseVariablStatement() {
-        return null;
-    }
-
-    /**
-     * @return Statement
-     */
-    private Statement parseForStatement() {
-        ForStatement forStmt = new ForStatement();
-        ArrayList<Statement> stmt = new ArrayList<>();
-        forStmt.setStart(tokens.consumeToken());
-        require(LEFT_PAREN, forStmt);
-        // Token ideToken = new tokens.consumeToken();
-        // forStmt.setVariableName(ideToken.getStringValue());
-        require(IN, forStmt);
-        forStmt.setExpression(parseExpression());
-        require(RIGHT_PAREN, forStmt);
-        require(LEFT_PAREN, forStmt);
-        while (!tokens.match(RIGHT_BRACE)) {
-            if (tokens.match(RIGHT_BRACE)) {
-                forStmt.addError(ErrorType.UNEXPECTED_TOKEN);
-                return forStmt;
-            }
-            stmt.add(parseStatement());
-        }
-        forStmt.setBody(stmt);
-        forStmt.setEnd(require(RIGHT_BRACE, forStmt));
-        return forStmt;
-    }
-
-    /**
-     * @return Statement
-     */
-    private Statement parseReturnStatement() {
+    private Statement parseReturn() {
         ReturnStatement retStmt = new ReturnStatement();
         retStmt.setStart(tokens.consumeToken());
         if (!tokens.match(RIGHT_BRACE)) {
@@ -239,13 +321,15 @@ public class CatScriptParser {
         return retStmt;
     }
 
+
     // ============================================================
     // Expressions
     // ============================================================
+
     /**
      * parseExpression() is our "top level" Expression that will be called. This is
      * the start of our recursive descent.
-     * 
+     *
      * @return parseEqualityExpression()
      */
     private Expression parseExpression() {
@@ -262,10 +346,10 @@ public class CatScriptParser {
      * RHS of the equation does the same descent down Once that side has returned we
      * can then send both sides to the EqualityExpression class to be evaluated then
      * we make sure that we are capturing the whole expression and setting that
-     * equal to the LHS of the expression incase there is more expression to
+     * equal to the LHS of the expression in case there is more expression to
      * evaluate and return that to either end the parsing or to start it all over
      * again.
-     * 
+     *
      * @return EqualityExpression
      */
     private Expression parseEqualityExpression() {
@@ -284,7 +368,7 @@ public class CatScriptParser {
     /**
      * parseComparisonExpression() behaves the same as parseEqualityExpression()
      * just returns a different type of expression.
-     * 
+     *
      * @return ComparisonExpression()
      */
     private Expression parseComparisonExpression() {
@@ -303,7 +387,7 @@ public class CatScriptParser {
     /**
      * parseAdditiveExpression() also behaves pretty similar to the other two above
      * the only difference here is that we can have a while() loop for readability.
-     * 
+     *
      * @return AdditiveExpression()
      */
     private Expression parseAdditiveExpression() {
@@ -322,7 +406,7 @@ public class CatScriptParser {
     /**
      * parseFactorExpression() works the same as the class above just returns a
      * different type of expression
-     * 
+     *
      * @return FactorExpression()
      */
     private Expression parseFactorExpression() {
@@ -347,8 +431,7 @@ public class CatScriptParser {
      * Shout out recursive descent. If it is not a MINUS or a NOT then it gets
      * returned to the parsePrimaryExpression() which handles the several different
      * variations of a primary expression.
-     * 
-     * @return unaryExpression()
+     *
      * @return parsePrimaryExpression()
      */
     private Expression parseUnaryExpression() {
@@ -367,9 +450,9 @@ public class CatScriptParser {
     /**
      * parsePrimaryExpression() is where we handle types Here we can return the
      * token type. So when we encounter the literal expressions such as 1+1+1. That
-     * expression would be evaluated to  an IntegerLiteral expression. So this
-     * class handles all similar occurences.
-     * 
+     * expression would be evaluated to an IntegerLiteral expression. So this class
+     * handles all similar occurences.
+     *
      * @return Expression
      */
     private Expression parsePrimaryExpression() {
@@ -428,7 +511,7 @@ public class CatScriptParser {
      * @return Expression
      */
     private Expression parseFunctionCall(Token token) {
-        List<Expression> expList = new ArrayList<>();
+        List<Expression> expList = new LinkedList<>();
         while (!tokens.match(RIGHT_PAREN)) {
             if (!tokens.hasMoreTokens()) {
                 FunctionCallExpression errList = new FunctionCallExpression(token.getStringValue(), expList);
@@ -447,11 +530,12 @@ public class CatScriptParser {
     }
 
     /**
-     * 
+     *
      */
+
     private Expression parseListLiteral() {
         tokens.consumeToken();
-        List<Expression> expList = new ArrayList<>();
+        List<Expression> expList = new LinkedList<>();
         while (!tokens.match(RIGHT_BRACKET)) {
             if (!tokens.hasMoreTokens()) {
                 ListLiteralExpression errList = new ListLiteralExpression(expList);
@@ -474,38 +558,39 @@ public class CatScriptParser {
     private TypeLiteral parseTypeExpression() {
         String token = tokens.consumeToken().getStringValue();
         TypeLiteral typeLIT = new TypeLiteral();
-        if (token == "int") {
+        if (token.equals("int")) {
             typeLIT.setType(CatscriptType.INT);
             return typeLIT;
-        } else if (token == "bool") {
+        } else if (token.equals("bool")) {
             typeLIT.setType(CatscriptType.BOOLEAN);
             return typeLIT;
-        } else if (token == "string") {
+        } else if (token.equals("string")) {
             typeLIT.setType(CatscriptType.STRING);
             return typeLIT;
-        } else if (token == "object") {
+        } else if (token.equals("object")) {
             typeLIT.setType(CatscriptType.OBJECT);
             return typeLIT;
-        } else if (token == "void") {
+        } else if (token.equals("void")) {
             typeLIT.setType(CatscriptType.VOID);
             return typeLIT;
-        } else if (token == "list") {
+        } else if (token.equals("list")) {
             TypeLiteral listTypeLit = null;
-            String lhs = tokens.consumeToken().getStringValue();
-            if (lhs.equals("<")) {
+            if (tokens.getCurrentToken().getStringValue().equals("<")) {
+                tokens.consumeToken();
                 listTypeLit = parseTypeExpression();
             }
             if (tokens.consumeToken().getStringValue().equals(">")) {
-                assert listTypeLit != null;
+                if (listTypeLit == null) throw new AssertionError();
                 CatscriptType.ListType listTYPE = new CatscriptType.ListType(listTypeLit.getType());
                 typeLIT.setType(listTYPE);
                 return typeLIT;
             }
+            typeLIT.setType(new CatscriptType.ListType(CatscriptType.OBJECT));
+            return typeLIT;
         } else {
             typeLIT.setType(CatscriptType.NULL);
             return typeLIT;
         }
-        return typeLIT;
     }
 
     /**

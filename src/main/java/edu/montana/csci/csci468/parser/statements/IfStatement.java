@@ -65,12 +65,21 @@ public class IfStatement extends Statement {
         symbolTable.popScope();
     }
 
-    //==============================================================
+    // ==============================================================
     // Implementation
-    //==============================================================
+    // ==============================================================
     @Override
     public void execute(CatscriptRuntime runtime) {
-        super.execute(runtime);
+        boolean expr = (boolean) getExpression().evaluate(runtime);
+        if (expr) {
+            for (Statement stmts : getTrueStatements()) {
+                stmts.execute(runtime);
+            }
+        } else if (!getElseStatements().isEmpty()) {
+            for (Statement stmt : getElseStatements()) {
+                stmt.execute(runtime);
+            }
+        }
     }
 
     @Override

@@ -90,11 +90,10 @@ public class FunctionDefinitionStatement extends Statement {
             statement.validate(symbolTable);
         }
         symbolTable.popScope();
-        if (!type.equals(CatscriptType.VOID)) {
-            if (!validateReturnCoverage(body)) {
-                addError(ErrorType.MISSING_RETURN_STATEMENT);
-            }
+        if (!type.equals(CatscriptType.VOID) && !validateReturnCoverage(body)) {
+            addError(ErrorType.MISSING_RETURN_STATEMENT);
         }
+
     }
 
     private boolean validateReturnCoverage(List<Statement> statements) {
@@ -141,12 +140,12 @@ public class FunctionDefinitionStatement extends Statement {
         return sb.toString();
     }
 
-    //==============================================================
+    // ==============================================================
     // Implementation
-    //==============================================================
+    // ==============================================================
     @Override
     public void execute(CatscriptRuntime runtime) {
-        super.execute(runtime);
+        runtime.setValue(name, this);
     }
 
     @Override

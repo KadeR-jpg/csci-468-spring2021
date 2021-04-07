@@ -1,0 +1,63 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Launch CatScriptServer",
+            "request": "launch",
+            "mainClass": "edu.montana.csci.csci468.CatScriptServer",
+            "projectName": "CSCI_466_Project"
+        },
+        {
+            "type": "java",
+            "name": "Launch BoxingUnboxingDemo",
+            "request": "launch",
+            "mainClass": "edu.montana.csci.csci468.demo.BoxingUnboxingDemo",
+            "projectName": "CSCI_466_Project"
+        },
+        {
+            "type": "java",
+            "name": "Launch Classes",
+            "request": "launch",
+            "mainClass": "edu.montana.csci.csci468.demo.Classes",
+            "projectName": "CSCI_466_Project"
+        },
+        {
+            "type": "java",
+            "name": "Launch Errors",
+            "request": "launch",
+            "mainClass": "edu.montana.csci.csci468.demo.Errors",
+            "projectName": "CSCI_466_Project"
+        },
+        {
+            "type": "java",
+            "name": "Launch JavaReview",
+            "request": "launch",
+            "mainClass": "edu.montana.csci.csci468.demo.JavaReview",
+            "projectName": "CSCI_466_Project"
+        },
+        {
+            "type": "java",
+            "name": "Launch Static",
+            "request": "launch",
+            "mainClass": "edu.montana.csci.csci468.demo.Static",
+            "projectName": "CSCI_466_Project"
+        },
+        {
+            "type": "java",
+            "name": "Launch VisitorDemo",
+            "request": "launch",
+            "mainClass": "edu.montana.csci.csci468.demo.VisitorDemo",
+            "projectName": "CSCI_466_Project"
+        }
+    ]
+}
