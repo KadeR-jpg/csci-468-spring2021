@@ -10,6 +10,7 @@ import java.util.List;
 
 public class FunctionCallStatement extends Statement {
     private FunctionCallExpression expression;
+
     public FunctionCallStatement(FunctionCallExpression parseExpression) {
         this.expression = addChild(parseExpression);
     }

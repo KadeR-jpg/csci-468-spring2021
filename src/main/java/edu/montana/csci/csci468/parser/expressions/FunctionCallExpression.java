@@ -72,7 +72,6 @@ public class FunctionCallExpression extends Expression {
             eval.add(exp.evaluate(runtime));
         }
         return funcDef.invoke(runtime, eval);
-
     }
 
     @Override

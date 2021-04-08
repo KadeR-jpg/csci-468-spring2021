@@ -81,6 +81,7 @@ public class IfStatement extends Statement {
             }
         }
     }
+    
 
     @Override
     public void transpile(StringBuilder javascript) {

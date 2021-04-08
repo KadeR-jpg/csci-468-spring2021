@@ -73,7 +73,16 @@ public class ForStatement extends Statement {
     //==============================================================
     @Override
     public void execute(CatscriptRuntime runtime) {
-        super.execute(runtime);
+        List<Object> forList = new LinkedList<>();
+        forList = (List<Object>) expression.evaluate(runtime);
+        runtime.pushScope();
+        for(Object exp: forList) {
+            runtime.setValue(variableName, exp);
+            for(Statement stmt: getBody()){
+                stmt.execute(runtime);
+            }
+        }
+        runtime.popScope();
     }
 
     @Override
