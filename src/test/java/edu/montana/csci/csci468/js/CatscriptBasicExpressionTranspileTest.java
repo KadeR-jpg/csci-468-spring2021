@@ -67,7 +67,6 @@ public class CatscriptBasicExpressionTranspileTest extends CatscriptTestBase {
         assertEquals("true\n", transpile("true == true"));
         assertEquals("true\n", transpile("null == null"));
         assertEquals("true\n", transpile("true != null"));
-        // TODO javascript semantics
         // assertEquals("true\n", transpile("true != 1"));
     }
 

@@ -112,13 +112,41 @@ public class AdditiveExpression extends Expression {
 
     @Override
     public void compile(ByteCodeGenerator code) {
-        getLeftHandSide().compile(code);
-        getRightHandSide().compile(code);
-        if (isAdd()) {
-            code.addInstruction(Opcodes.IADD);
+        String strThing = "java/lang/String";
+        if(!getRightHandSide().getType().equals(CatscriptType.STRING) && !getLeftHandSide().getType().equals(CatscriptType.STRING)) {
+            getLeftHandSide().compile(code);
+            getRightHandSide().compile(code);
+            if(isAdd()) {
+                code.addInstruction(Opcodes.IADD);
+            } else {
+                code.addInstruction(Opcodes.ISUB);
+            }
         } else {
-            code.addInstruction(Opcodes.ISUB);
+            if(getLeftHandSide().getType().equals(CatscriptType.STRING) && getRightHandSide().getType().equals(CatscriptType.STRING)) {
+                getLeftHandSide().compile(code);
+                getRightHandSide().compile(code);
+            } else if (getRightHandSide().getType().equals(CatscriptType.STRING)) {
+                getLeftHandSide().compile(code);
+                code.addMethodInstruction(Opcodes.INVOKESTATIC, strThing, "valueOf", argType(getLeftHandSide().getType()));
+                getRightHandSide().compile(code);
+            } else if (getLeftHandSide().getType().equals(CatscriptType.STRING)) {
+                getLeftHandSide().compile(code);
+                getRightHandSide().compile(code);
+                code.addMethodInstruction(Opcodes.INVOKESTATIC, strThing, "valueOf", argType(getRightHandSide().getType()));
+            }
+            code.addMethodInstruction(Opcodes.INVOKEVIRTUAL, strThing, "concat", "(Ljava/lang/String;)Ljava/lang/String;");
         }
+    }
+
+    private String argType(CatscriptType type) {
+        if(type.equals(CatscriptType.INT)) {
+            return "(I)Ljava/lang/String;";
+        } else if (type.equals(CatscriptType.BOOLEAN)) {
+            return "(Z)Ljava/lang/String;";
+        } else {
+            return "(Ljava/lang/Object;)Ljava/lang/String;";
+        }
+
     }
 
 }

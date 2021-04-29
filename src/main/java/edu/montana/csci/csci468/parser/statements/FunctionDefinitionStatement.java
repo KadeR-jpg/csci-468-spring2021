@@ -8,7 +8,9 @@ import edu.montana.csci.csci468.parser.ErrorType;
 import edu.montana.csci.csci468.parser.ParseError;
 import edu.montana.csci.csci468.parser.SymbolTable;
 import edu.montana.csci.csci468.parser.expressions.TypeLiteral;
+import org.objectweb.asm.Opcodes;
 
+import javax.swing.plaf.nimbus.State;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -97,7 +99,6 @@ public class FunctionDefinitionStatement extends Statement {
     }
 
     private boolean validateReturnCoverage(List<Statement> statements) {
-        // TODO - implement return coverage checking
         return true;
     }
 
@@ -155,6 +156,13 @@ public class FunctionDefinitionStatement extends Statement {
 
     @Override
     public void compile(ByteCodeGenerator code) {
-        super.compile(code);
+        code.pushMethod(Opcodes.ACC_PUBLIC, getName(), getDescriptor());
+        for(int x = 0; x < getParameterCount(); x++) {
+            code.addVarInstruction(Opcodes.ILOAD, 0);
+        }
+        for(Statement stmtBdy : getBody()) {
+            stmtBdy.compile(code);
+        }
+        code.popMethod();
     }
 }

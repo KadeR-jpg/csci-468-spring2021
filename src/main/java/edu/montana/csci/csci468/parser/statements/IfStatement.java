@@ -7,7 +7,11 @@ import edu.montana.csci.csci468.parser.ErrorType;
 import edu.montana.csci.csci468.parser.ParseError;
 import edu.montana.csci.csci468.parser.SymbolTable;
 import edu.montana.csci.csci468.parser.expressions.Expression;
+import org.objectweb.asm.Label;
 
+import org.objectweb.asm.Opcodes;
+
+import java.awt.*;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -81,7 +85,6 @@ public class IfStatement extends Statement {
             }
         }
     }
-    
 
     @Override
     public void transpile(StringBuilder javascript) {
@@ -90,6 +93,24 @@ public class IfStatement extends Statement {
 
     @Override
     public void compile(ByteCodeGenerator code) {
-        super.compile(code);
+        getExpression().compile(code);
+        Label elseLabel = new Label();
+        Label end = new Label();
+        if (!elseStatements.isEmpty()) {
+            code.addJumpInstruction(Opcodes.IFEQ, elseLabel);
+        } else {
+            code.addJumpInstruction(Opcodes.IFEQ, end);
+        }
+        for (Statement stmt : getTrueStatements()) {
+            stmt.compile(code);
+        }
+        code.addJumpInstruction(Opcodes.GOTO, end);
+        if (!elseStatements.isEmpty()) {
+            code.addLabel(elseLabel);
+            for (Statement stmt : getElseStatements()) {
+                stmt.compile(code);
+            }
+        }
+        code.addLabel(end);
     }
 }

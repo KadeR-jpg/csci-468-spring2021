@@ -4,6 +4,7 @@ import edu.montana.csci.csci468.bytecode.ByteCodeGenerator;
 import edu.montana.csci.csci468.eval.CatscriptRuntime;
 import edu.montana.csci.csci468.parser.CatscriptType;
 import edu.montana.csci.csci468.parser.SymbolTable;
+import org.objectweb.asm.Opcodes;
 
 public class StringLiteralExpression extends Expression {
     private final String stringValue;
@@ -40,7 +41,8 @@ public class StringLiteralExpression extends Expression {
 
     @Override
     public void compile(ByteCodeGenerator code) {
-        super.compile(code);
+
+        code.pushConstantOntoStack(stringValue);
     }
 
 

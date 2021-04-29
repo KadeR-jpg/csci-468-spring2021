@@ -6,10 +6,16 @@ import edu.montana.csci.csci468.parser.CatscriptType;
 import edu.montana.csci.csci468.parser.ErrorType;
 import edu.montana.csci.csci468.parser.ParseError;
 import edu.montana.csci.csci468.parser.SymbolTable;
+import edu.montana.csci.csci468.parser.statements.CatScriptProgram;
 import edu.montana.csci.csci468.parser.statements.FunctionDefinitionStatement;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.objectweb.asm.Opcodes;
+
+import static edu.montana.csci.csci468.bytecode.ByteCodeGenerator.internalNameFor;
 
 public class FunctionCallExpression extends Expression {
     private final String name;
@@ -60,6 +66,27 @@ public class FunctionCallExpression extends Expression {
         }
     }
 
+    public String getDescriptor() {
+        StringBuilder sb = new StringBuilder("(");
+        for (Expression expr : getArguments()) {
+            CatscriptType argType = expr.getType();
+            if (argType.equals(CatscriptType.BOOLEAN) || argType.equals(CatscriptType.INT)) {
+                sb.append("I");
+            } else {
+                sb.append("L").append(internalNameFor(getType().getJavaType())).append(";");
+            }
+        }
+        sb.append(")");
+        if (type.equals(CatscriptType.VOID)) {
+            sb.append("V");
+        } else if (type.equals(CatscriptType.BOOLEAN) || type.equals(CatscriptType.INT)) {
+            sb.append("I");
+        } else {
+            sb.append("L").append(internalNameFor(getType().getJavaType())).append(";");
+        }
+        return sb.toString();
+    }
+
     // ==============================================================
     // Implementation
     // ==============================================================
@@ -81,7 +108,10 @@ public class FunctionCallExpression extends Expression {
 
     @Override
     public void compile(ByteCodeGenerator code) {
-        super.compile(code);
+        for (Expression arg : getArguments()) {
+            arg.compile(code);
+        }
+        code.addMethodInstruction(Opcodes.INVOKEVIRTUAL, code.getProgramInternalName(), getName(), getDescriptor());
     }
 
 }

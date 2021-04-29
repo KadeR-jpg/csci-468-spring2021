@@ -1,11 +1,17 @@
 package edu.montana.csci.csci468.parser.expressions;
 
+import org.objectweb.asm.Opcodes;
+
 import edu.montana.csci.csci468.bytecode.ByteCodeGenerator;
 import edu.montana.csci.csci468.eval.CatscriptRuntime;
 import edu.montana.csci.csci468.parser.CatscriptType;
 import edu.montana.csci.csci468.parser.SymbolTable;
 import edu.montana.csci.csci468.tokenizer.Token;
 import edu.montana.csci.csci468.tokenizer.TokenType;
+
+import org.objectweb.asm.Label;
+
+import java.util.Objects;
 
 public class EqualityExpression extends Expression {
 
@@ -55,8 +61,8 @@ public class EqualityExpression extends Expression {
     public Object evaluate(CatscriptRuntime runtime) {
         Object lhs = getLeftHandSide().evaluate(runtime);
         Object rhs = getRightHandSide().evaluate(runtime);
-        if(isEqual()) {
-            return  lhs == rhs;
+        if (isEqual()) {
+            return lhs == rhs;
         } else {
             return lhs != rhs;
         }
@@ -69,7 +75,23 @@ public class EqualityExpression extends Expression {
 
     @Override
     public void compile(ByteCodeGenerator code) {
-        super.compile(code);
+        getLeftHandSide().compile(code);
+        box(code, getLeftHandSide().getType());
+        getRightHandSide().compile(code);
+        box(code, getRightHandSide().getType());
+        code.addMethodInstruction(Opcodes.INVOKESTATIC, "java/util/Objects", "equals", "(Ljava/lang/Object;Ljava/lang/Object;)Z");
+        if (!isEqual()) {
+            Label setFalse = new Label();
+            Label end = new Label(); 
+            code.addJumpInstruction(Opcodes.IFNE, setFalse);
+            code.pushConstantOntoStack(true);
+            code.addJumpInstruction(Opcodes.GOTO, end);
+            code.addLabel(setFalse);
+            code.pushConstantOntoStack(false);
+            code.addLabel(end);
+        }
+
+
     }
 
 

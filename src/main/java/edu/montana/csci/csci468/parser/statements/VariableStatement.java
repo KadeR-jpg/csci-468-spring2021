@@ -1,5 +1,7 @@
 package edu.montana.csci.csci468.parser.statements;
 
+import org.objectweb.asm.Opcodes;
+
 import edu.montana.csci.csci468.bytecode.ByteCodeGenerator;
 import edu.montana.csci.csci468.eval.CatscriptRuntime;
 import edu.montana.csci.csci468.parser.CatscriptType;
@@ -7,6 +9,8 @@ import edu.montana.csci.csci468.parser.ErrorType;
 import edu.montana.csci.csci468.parser.ParseError;
 import edu.montana.csci.csci468.parser.SymbolTable;
 import edu.montana.csci.csci468.parser.expressions.Expression;
+
+import static edu.montana.csci.csci468.bytecode.ByteCodeGenerator.internalNameFor;
 
 public class VariableStatement extends Statement {
     private Expression expression;
@@ -83,6 +87,24 @@ public class VariableStatement extends Statement {
 
     @Override
     public void compile(ByteCodeGenerator code) {
-        super.compile(code);
+        if (isGlobal()) {
+            code.addVarInstruction(Opcodes.ALOAD, 0);
+            getExpression().compile(code);
+            String desc = "I";
+            if (!getType().equals(CatscriptType.INT)) {
+                desc = "L" + internalNameFor(getType().getJavaType()) + ";";
+            }
+            code.addField(getVariableName(), desc);
+            code.addFieldInstruction(Opcodes.PUTFIELD, getVariableName(), desc, code.getProgramInternalName());
+        } else {
+            Integer localStorageSlot = code.createLocalStorageSlotFor(getVariableName());
+            getExpression().compile(code);
+            if (getExpression().getType().equals(CatscriptType.INT)) {
+                code.addVarInstruction(Opcodes.ISTORE, localStorageSlot);
+            } else {
+                code.addVarInstruction(Opcodes.ASTORE, localStorageSlot);
+
+            }
+        }
     }
 }
