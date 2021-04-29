@@ -1,0 +1,4 @@
+Errors:
+
+- Missing source zip
+- Missing kade_pitsch_portfolio.pdf
