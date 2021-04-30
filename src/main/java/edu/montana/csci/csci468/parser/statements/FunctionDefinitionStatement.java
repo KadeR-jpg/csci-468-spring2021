@@ -158,11 +158,12 @@ public class FunctionDefinitionStatement extends Statement {
     public void compile(ByteCodeGenerator code) {
         code.pushMethod(Opcodes.ACC_PUBLIC, getName(), getDescriptor());
         for(int x = 0; x < getParameterCount(); x++) {
-            code.addVarInstruction(Opcodes.ILOAD, 0);
+            code.createLocalStorageSlotFor(getParameterName(x));
         }
         for(Statement stmtBdy : getBody()) {
             stmtBdy.compile(code);
         }
+        code.addInstruction(Opcodes.RETURN);
         code.popMethod();
     }
 }

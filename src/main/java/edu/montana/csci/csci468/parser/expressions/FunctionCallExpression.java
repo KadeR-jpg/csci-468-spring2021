@@ -21,6 +21,7 @@ public class FunctionCallExpression extends Expression {
     private final String name;
     List<Expression> arguments;
     private CatscriptType type;
+    private String funcDef;
 
     public FunctionCallExpression(String functionName, List<Expression> arguments) {
         this.arguments = new LinkedList<>();
@@ -64,6 +65,7 @@ public class FunctionCallExpression extends Expression {
                 }
             }
         }
+        funcDef = function.getDescriptor();
     }
 
     public String getDescriptor() {
@@ -108,10 +110,14 @@ public class FunctionCallExpression extends Expression {
 
     @Override
     public void compile(ByteCodeGenerator code) {
+        code.addVarInstruction(Opcodes.ALOAD, 0);
         for (Expression arg : getArguments()) {
             arg.compile(code);
+            if(!getDescriptor().equals(funcDef)) {
+                box(code, arg.getType());
+            }
         }
-        code.addMethodInstruction(Opcodes.INVOKEVIRTUAL, code.getProgramInternalName(), getName(), getDescriptor());
+        code.addMethodInstruction(Opcodes.INVOKEVIRTUAL, code.getProgramInternalName(), getName(), funcDef);
     }
 
 }
