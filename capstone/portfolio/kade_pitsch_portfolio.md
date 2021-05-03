@@ -2,7 +2,7 @@
 ## Kade Pitsch And Robert Jenko
 
 ## Sections
-* ### [Source](#section-one)
+* ### [Source](#section-one-source)
 * ### [Teamwork](#section-two-teamwork)
 * ### [Design Patterns](#section-three-design-pattern)
 * ### [Technical Writing](#section-four-technical-writing)
@@ -14,11 +14,11 @@
 # Section One: Source
 The source is contained in `source.zip` that is in this directory
 # Section Two: Teamwork
-For this course i was the main contributor for this project.This includes the code for 
+For this course i was the main contributor for this project. This includes the code for 
 tokenization, parsing, evaluation and byte-code. My partner {team-member 2} was responsible for 
 providing documentation and 3 tests for my code base. This includes providing well structured
 and concise documentation for my code. Also my partner {team-member 2} will write 3 tests for
-my code that could written for tokenization, evaluation and/or byte-code. These test will be expected 
+my code that could written for tokenization, parsing, evaluation and/or byte-code. These test will be expected 
 to be unique and run able with my current code. Team member contributions were 50/50 as we both
 provided the same things to each other and i would
 assume that we spent about two to four hours on each others
@@ -49,9 +49,6 @@ public void evalTests() {
     assertEquals(1, evaluateExpression("1"));
 }
 ```
-
-
-## Documentation From Partner {Team-member 2}
 
 # Section Three: Design Pattern
 Memoize type access is a type of optimization pattern.
@@ -288,9 +285,8 @@ Then we also have Statements on the bottom 'balloon'. This all have a IS A relat
 
 ![UML Stuff](expressions_balloon.png)
 
-This is another example of our recursive descent compilation method. After we get to the `ParseElement`
-is it an expression or is it a statement? Then we can define a more specific method down the tree.
-nb 
+This is another example of our recursive descent compilation method. After we get to the `ParseElement` we can decide if
+it is an expression or a statement. Then we can define a more specific method down the tree.
 
 
 # Section Six: Design trade-offs
