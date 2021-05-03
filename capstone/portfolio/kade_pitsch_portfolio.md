@@ -24,7 +24,58 @@ provided the same things to each other and i would
 assume that we spent about two to four hours on each others
 projects.  
 
-## Documentation for Team-Member 2 from
+## Tests that i provided to my partner
+```java
+//Test One
+public void tokenTests() {
+    assertTokensAre("12 - 1 + 1", INTEGER, MINUS, INTEGER, PLUS);
+    assertTokensAre("return false return true", RETURN, FALSE, RETURN, TRUE);
+    assertTokensAre("({[]})", LEFT_PAREN, LEFT_BRACE, LEFT_BRACKET, RIGHT_BRACKET, RIGHT_BRACE, RIGHT_PAREN);
+}
+//Test Two
+public void parsingTest() {
+    VariableStatement expr = parseStatement("var cat : string = "meow"");
+    assertNotNull(expr);
+    assertEquals("cat", expr.getVariableName());
+    assertEquals(CatscriptType.BOOLEAN, expr.getExplicitType());
+    assertTrue(expr.getExpression() instanceof StringLiteralExpression);
+}
+
+//Test 3
+public void evalTests() {
+    assertEquals(true, evaluateExpression("2 < 4"));
+    assertEquals(false, evaluateExpression("2 > 4"));
+    assertEquals(true, evaluateExpression("true == true"));
+    assertEquals(1, evaluateExpression("1"));
+}
+```
+
+
+## Documentation From Partner {Team-member 2}
+
+# Section Three: Design Pattern
+Memoize type access is a type of optimization pattern.
+This is where we store the results of expensive function calls and then the next time that a program requests
+that function we already have it stored instead of re-computing everything all over again.
+In catscript we did it like this
+``` java
+static Map<CatscriptType, CatscriptType> CACHE = new HashMap<>();
+public static CatscriptType getListType(CatscriptType type) {
+    CatscriptType possibleMatch = CACHE.get(type);
+    if(possibleMatch != null){
+        return possibleMatch;
+    } else {
+        ListType listType = new ListType(type);
+        CACHE.put(type, listType);
+        return listType;
+    }
+}
+```
+This function will store that said function and we treat it as a `CACHE` when this function is called if the function already exists in the 
+list then great just return it, otherwise we need to make a 'copy' of that function call and put it into the list.
+Now we have a very simple memoization of functions. 
+
+# Section Four: Technical Writing
 ## Tokenization
 Tokenization is where our recursive descent parsing starts. Starting with the `tokenize()` function,
 consuming whitespace that does not matter for catscript.
@@ -228,16 +279,6 @@ on line `/*5*/`
 
 ```
 
-
-## Byte-Code
-Byte-Code was written by wizards, unreadable to mere mortals. Sorry i do not make the rules ¯\\_(ツ)_/¯
-
-## Documentation From Partner {Team-member 2}
-
-# Section Three: Design Pattern
-Memoize type access
-# Section Four: Technical Writing
-The content that was provided to me by my partner
 # Section Five: UML
 Here we have the expressions in UML form. We can se that the top of the image all expression types have an IS-A relationship with the base expression in the center.
 `EqualityExpression` IS A type of `Expression`
@@ -253,7 +294,16 @@ nb
 
 
 # Section Six: Design trade-offs
-Recursive Descent vs Parser Generators
+The main design trade-off in this class was based on Recursive Descent vs Parser Generator. 
+A recursive descent parser is a top down parser that relies on recursive procedures.
+While a parser generator takes CFG or a set of rules to then create a parser. 
+Recursive descent has many benefits to a parser generator, one being that when working with recursive descent it
+is very easy to see and understand how parsing is fundamentally working while as parser generators are more difficult to understand 
+but can be quicker to implement. To me this trade-off is more than worth it because i feel like i actually learned something about
+parsing through recursive descent. Parser generators can be cumbersome and tedious to implement other features into as well.
+I do believe that recursive descent taught me more and helped me understand how the compiler was working at every step and i do not think that
+i would have gotten that same feeling if we had implemented a parser generator.
+
 # Section Seven: Software development life cycle model
 For this class we used the test-driven development for our software lifecycle. This type of development where
 you write test cases to 'test' your software. For our programs this was super nice because we could just write
