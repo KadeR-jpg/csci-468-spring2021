@@ -16,7 +16,6 @@ Highlight the design pattern in yellow. Explain why you used the pattern and did
 
 # Section 5: UML. 
 
-Include a UML diagram for parse elements
 
 # Section 6: Design trade-offs
 

@@ -15,12 +15,12 @@
 The source is contained in `source.zip` that is in this directory
 # Section Two: Teamwork
 For this course i was the main contributor for this project.This includes the code for 
-tokenization, evaluation and byte-code. My partner {team-member 2} was responsible for 
+tokenization, parsing, evaluation and byte-code. My partner {team-member 2} was responsible for 
 providing documentation and 3 tests for my code base. This includes providing well structured
 and concise documentation for my code. Also my partner {team-member 2} will write 3 tests for
 my code that could written for tokenization, evaluation and/or byte-code. These test will be expected 
 to be unique and run able with my current code. Team member contributions were 50/50 as we both
-provided the same things to each other i would
+provided the same things to each other and i would
 assume that we spent about two to four hours on each others
 projects.  
 
@@ -142,18 +142,124 @@ Parsing is huge compared to Tokenization so i will go over the functions that i 
 * Are the most important
 * Encapsulate the fundamentals of parsing in catscript.
 
+``` java
+    private Statement parseStatement() {
+        if (tokens.match(FUNCTION)) {
+            return parseFunction();
+        } else if (tokens.match(FOR)) {
+            return parseFor();
+        } else if (tokens.match(PRINT)) {
+            return parsePrint();
+        } else if (tokens.match(VAR)) {
+            return parseVar();
+        } else if (tokens.match(IF)) {
+            return parseIf();
+        } else if (tokens.match(RETURN)) {
+            return parseReturn();
+        } else if (tokens.match(IDENTIFIER)) {
+            Token token = tokens.consumeToken();
+            if (tokens.matchAndConsume(LEFT_PAREN)) {
+                FunctionCallExpression exp = (FunctionCallExpression) parseFunctionCall(token);
+                return new FunctionCallStatement(exp);
+            }
+            return parseAssignment(token);
+        } else if (tokens.match(EQUAL)) {
+            return parseAssignment(tokens.getCurrentToken());
+        } else {
+            return new SyntaxErrorStatement(tokens.consumeToken());
+        }
+    }
+```
+This is the most important function in the parser. This function will parse out which type we are working with... descending into more specificity.
+
+The `parseFunction()` method is the second most important method for parsing. 
+This is the form of a function in our Catscript grammar
+``` ebnf
+function_declaration = 'function', IDENTIFIER, '(', parameter_list, ')' + 
+                       [ ':' + type_expression ], '{',  { function_body_statement },  '}';
+
+function_body_statement = statement |
+                          return_statement;
+function_call_statement = function_call;
+function_call = IDENTIFIER, '(', argument_list , ')'
+```
+
+Which reads as we declare a function in catscript as `function foo(x:int) : int {}` where we have the identifier `function` then the 
+function name and args `foo(x : int)` finally the return type `int` with the curly braces that will contain the function body. 
+`/*1*/` we have a similar approach to the string scanning we did in tokenization. We need to know where the start of the function is so we can 
+properly parse it. `/*2*/` After we consume the whole function token we set the name of the function from the string value of that function.
+`/*3*/` We then need a list to store all the function arguments into, this will make it easiest for us to evaluate these. 
+Which happens directly below `/*3*/` we are looping through all the statements inside that list and adding them to 
+out parameters.
+Once we have added all the types and parameters to the function then we get the function body which has a whole other function to process that
+on line `/*5*/`
+
+
+
+
+``` java
+    private Statement parseFunction() {
+        FunctionDefinitionStatement funcDefinition = new FunctionDefinitionStatement();
+/*1*/   funcDefinition.setStart(tokens.consumeToken());
+        Token function = tokens.consumeToken();
+/*2*/   funcDefinition.setName(function.getStringValue());
+        require(LEFT_PAREN, funcDefinition);
+/*3*/   List<Parameter> listOfStatements = paramList();
+        for (Parameter stmt : listOfStatements) {
+            funcDefinition.addParameter(stmt.getIdentifier(), stmt.getType());
+        }
+        require(RIGHT_PAREN, funcDefinition);
+        if (tokens.matchAndConsume(COLON)) {
+            funcDefinition.setType(parseTypeExpression());
+        } else {
+            TypeLiteral voidType = new TypeLiteral();
+            voidType.setType(CatscriptType.VOID);
+            funcDefinition.setType(voidType);
+        }
+        require(LEFT_BRACE, funcDefinition);
+        currentFunctionDefinition = funcDefinition;
+/*5*/   funcDefinition.setBody(parseFunctionBody());
+        require(RIGHT_BRACE, funcDefinition);
+        funcDefinition.setEnd(tokens.lastToken());
+
+        currentFunctionDefinition = funcDefinition;
+        return funcDefinition;
+    }
+
+```
+
+
 ## Byte-Code
 Byte-Code was written by wizards, unreadable to mere mortals. Sorry i do not make the rules ¯\\_(ツ)_/¯
 
 ## Documentation From Partner {Team-member 2}
 
 # Section Three: Design Pattern
-Design patterns that we used 
+Memoize type access
 # Section Four: Technical Writing
+The content that was provided to me by my partner
 # Section Five: UML
-Describe one of the UML diagrams that are provided in the folders.
+Here we have the expressions in UML form. We can se that the top of the image all expression types have an IS-A relationship with the base expression in the center.
+`EqualityExpression` IS A type of `Expression`
+Expression is also a type of `ParseElement`
+Then we also have Statements on the bottom 'balloon'. This all have a IS A relationship to the base class `Statement`
+`IfStatement` IS A `Statement` and `Statement` is a `ParseElement`
+
+![UML Stuff](expressions_balloon.png)
+
+This is another example of our recursive descent compilation method. After we get to the `ParseElement`
+is it an expression or is it a statement? Then we can define a more specific method down the tree.
+nb 
+
 
 # Section Six: Design trade-offs
 Recursive Descent vs Parser Generators
 # Section Seven: Software development life cycle model
-Test Driven Development, talk about your experience about itl
+For this class we used the test-driven development for our software lifecycle. This type of development where
+you write test cases to 'test' your software. For our programs this was super nice because we could just write
+code and continually test it. Writing least amount of code until we were able to get the test passing
+then we could refactor if we needed to or just move onto the next tests.
+For me i had a lot of fun writing software this way because it made
+it interactive and kinda like a game. Just getting more and more tests to pass was a lot of fun and a really
+nice way to stay on track. I know that is not how it probably works in the industry because those tests are not
+going to be pre-written for you so i assume that it was not TDD by the book but close enough for us.
